@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Longmeadow">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>551 Longmeadow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0A0A0B; --panel:#131315; --panel2:#1A1A1D; --line:#2A2A2F; --line2:#3A3A40;
+  --text:#EDEDEF; --muted:#8B8B93; --dim:#5E5E66; --white:#FFFFFF; --ink:#0A0A0B;
+  --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans:Manrope, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:10px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);margin:0}
+:root{padding-top:env(safe-area-inset-top,0px)}
+[hidden]{display:none!important}
+body{font-family:var(--sans);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 96px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:880px;margin:0 auto}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:22px 18px;border-bottom:1px solid var(--line)}
+.brand .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.brand h1{font-family:var(--serif);font-weight:400;font-size:40px;line-height:1;margin:4px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.brand h1 i{color:var(--muted)}
+.today-date{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.banner{margin-top:12px;font-size:13px;color:var(--muted);border:1px dashed var(--line2);border-radius:var(--r);padding:8px 12px}
+section.view{display:flex;flex-direction:column;gap:22px;padding-top:22px}
+h2{font-family:var(--serif);font-weight:400;font-size:28px;margin:0;line-height:1.1;text-wrap:balance}
+h3{font-size:12px;font-family:var(--mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stat{background:var(--panel);padding:14px 14px 12px;display:flex;flex-direction:column;gap:2px}
+.stat .n{font-family:var(--serif);font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.stat .n small{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:2px}
+.stat .l{font-size:12px;color:var(--muted)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,1fr)} .brand h1{font-size:30px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.spread{justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:500 13px var(--sans);color:var(--muted);background:transparent;border:1px solid var(--line2);border-radius:999px;padding:5px 11px;cursor:pointer;transition:all .15s}
+.chip:hover{color:var(--text);border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--white);color:var(--ink);border-color:var(--white)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--white);outline-offset:2px}
+.btn{font:600 13px var(--sans);background:var(--white);color:var(--ink);border:1px solid var(--white);border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--line2)}
+.btn.ghost:hover{border-color:var(--muted)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.4;cursor:default}
+input[type=text],input[type=number],select{font:500 14px var(--sans);color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:8px 10px;min-width:0}
+input[type=number]{width:64px;font-family:var(--mono);font-size:13px}
+.toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:600}
+.box{width:22px;height:22px;border:1.5px solid var(--muted);border-radius:6px;display:grid;place-items:center;flex:none}
+.box.on{background:var(--white);border-color:var(--white)}
+.box.on::after{content:"";width:10px;height:6px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg) translate(1px,-1px)}
+.prayers{display:flex;flex-direction:column}
+.prayer{display:grid;grid-template-columns:88px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.prayer:first-child{border-top:0;padding-top:0}
+.prayer .name{font-family:var(--serif);font-size:21px}
+.pill{font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line2);color:var(--dim);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.pill.on{background:var(--white);color:var(--ink);border-color:var(--white)}
+.pill.warn{border-color:var(--text);color:var(--text)}
+@media (max-width:560px){.prayer{grid-template-columns:1fr auto}.prayer .chips{grid-column:1/-1;order:3}}
+.list{display:flex;flex-direction:column}
+.item{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .grow{flex:1;min-width:0}
+.item .t{font-weight:600}
+.item .m{font-size:12.5px;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;border:1.5px solid var(--muted)}
+.dot.clean{background:#2E2E33;border-color:#55555C}
+.dot.due{background:#8C8C93;border-color:#8C8C93}
+.dot.none{background:transparent;border-color:#3A3A40;border-style:dashed}
+.dot.overdue{background:var(--white);border-color:var(--white);box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:rgba(10,10,11,.7);backdrop-filter:blur(6px)}
+.seg button{font:500 12px var(--mono);color:var(--muted);background:transparent;border:0;padding:6px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--white);color:var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font:500 11px var(--mono);color:var(--dim);letter-spacing:.06em;pointer-events:none}
+.sheet{border:1px solid var(--white);border-radius:var(--r);background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-size:30px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:13.5px;white-space:nowrap}
+th{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+td.num,th.num{text-align:right;font-family:var(--mono);font-size:13px}
+.scroll{overflow-x:auto}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--white)}
+.editrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.editrow:first-of-type{border-top:0}
+.editrow label{font:500 10px var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em;display:flex;flex-direction:column;gap:3px}
+.editrow input[type=text]{flex:1;min-width:140px}
+.x{background:none;border:1px solid var(--line2);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;align-self:flex-end}
+.x:hover{color:var(--text);border-color:var(--muted)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(10,10,11,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+nav.tabs .in{max-width:880px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+nav.tabs button{background:none;border:0;color:var(--dim);font:600 12px var(--sans);padding:8px 2px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+nav.tabs button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6}
+nav.tabs button[aria-current="page"]{color:var(--white)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--white);color:var(--ink);font-weight:600;font-size:13px;padding:9px 14px;border-radius:8px;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.empty{color:var(--muted);font-size:13.5px}
+.weeknav{display:flex;align-items:center;gap:8px}
+.weeknav .lbl{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:150px;text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow">Hizmet evi · Longmeadow, MA</div>
+      <h1>551 Longmeadow <i>St.</i></h1>
+    </div>
+    <div class="today-date" id="todayDate"></div>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+  <main id="app"></main>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div class="in" id="tabs"></div></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- defaults (used until the house setup is saved) ---------- */
+const DEFAULT_CONFIG = {
+  residents:[{id:"r1",name:"Yusuf"},{id:"r2",name:"Ali"},{id:"r3",name:"Emre"},{id:"r4",name:"Mustafa Can"},{id:"r5",name:"Ahmet Asim"},{id:"r6",name:"Muhammad Abi"}],
+  prayers:["sabah","aksam","yatsi"],
+  floors:[{n:0,name:"Ground"},{n:1,name:"Upstairs"}],
+  rooms:[
+    {id:"living",name:"Living room",floor:0,x:0,z:0,w:5,d:4,every:7},
+    {id:"kitchen",name:"Kitchen",floor:0,x:5,z:0,w:5,d:4,every:1},
+    {id:"dining",name:"Dining room",floor:0,x:0,z:4,w:4,d:4,every:3},
+    {id:"hall0",name:"Entry & hall",floor:0,x:4,z:4,w:3,d:4,every:7},
+    {id:"bath0",name:"Half bath",floor:0,x:7,z:4,w:3,d:2,every:3},
+    {id:"laundry",name:"Laundry",floor:0,x:7,z:6,w:3,d:2,every:14},
+    {id:"bed1",name:"Bedroom 1",floor:1,x:0,z:0,w:4,d:4,every:7},
+    {id:"hall1",name:"Upstairs hall",floor:1,x:4,z:0,w:2,d:8,every:7},
+    {id:"bed2",name:"Bedroom 2",floor:1,x:6,z:0,w:4,d:4,every:7},
+    {id:"bed3",name:"Bedroom 3",floor:1,x:0,z:4,w:4,d:4,every:7},
+    {id:"bath1",name:"Bathroom",floor:1,x:6,z:4,w:2,d:4,every:3},
+    {id:"study",name:"Study room",floor:1,x:8,z:4,w:2,d:4,every:7}
+  ],
+  duties:[
+    {id:"d1",title:"Kitchen & dishes",rotate:true},
+    {id:"d2",title:"Bathrooms",rotate:true},
+    {id:"d3",title:"Vacuum common areas",rotate:true},
+    {id:"d4",title:"Trash & recycling",rotate:true}
+  ]
+};
+const PRAYERS=[["sabah","Sabah"],["ogle","Öğle"],["ikindi","İkindi"],["aksam","Akşam"],["yatsi","Yatsı"]];
+const DEFAULT_CEMAAT=["sabah","aksam","yatsi"];
+const AP=()=>{const on=cfg().prayers||DEFAULT_CEMAAT;return PRAYERS.filter(([id])=>on.includes(id));};
+
+/* ---------- state ---------- */
+const S={config:null,days:{},rooms:{},weeks:{},notes:[],tab:"today",weekOffset:0,selRoom:null,floor:"all",live:false,cleanBy:null};
+try{S.tab=localStorage.getItem("lm.tab")||"today";S.cleanBy=localStorage.getItem("lm.me")||null;}catch(e){}
+
+const cfg=()=>S.config||DEFAULT_CONFIG;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const dkey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const today=()=>dkey(new Date());
+function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);return x;}
+function weekStart(off){const m=monday(new Date());m.setDate(m.getDate()+7*(off||0));return m;}
+const EPOCH=new Date(2024,0,1); // a Monday
+const weekIndex=m=>Math.round((m-EPOCH)/(7*864e5));
+function parseKey(k){const [y,mo,d]=k.split("-").map(Number);return new Date(y,mo-1,d);}
+function cycleLen(){const t=cfg().rotaTable;return t&&t.length?t.length:Math.max(1,cfg().residents.length);}
+function hafta(m){const a=cfg().rotaAnchor?parseKey(cfg().rotaAnchor):EPOCH;const n=cycleLen();const w=weekIndex(m)-weekIndex(a);return ((w%n)+n)%n+1;}
+const resName=id=>{const r=cfg().residents.find(r=>r.id===id);return r?r.name:"Someone";};
+const fmtDay=k=>{const [y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});};
+function ago(iso){if(!iso)return "never";const h=(Date.now()-new Date(iso))/36e5;if(h<1)return "just now";if(h<24)return Math.floor(h)+"h ago";const d=Math.floor(h/24);return d===1?"yesterday":d+" days ago";}
+
+let toastT;function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200);}
+
+/* ---------- server (Supabase) ---------- */
+const CONF=window.LEDGER_CONFIG||{};
+let PASS=null;try{PASS=localStorage.getItem("lm.pass");}catch(_){}
+function headers(){const h={"Content-Type":"application/json",apikey:CONF.supabaseKey};if(String(CONF.supabaseKey||"").startsWith("eyJ"))h.Authorization="Bearer "+CONF.supabaseKey;return h;}
+async function rpc(fn,body){
+  const res=await fetch(CONF.supabaseUrl.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:headers(),body:JSON.stringify(Object.assign({p_pass:PASS},body||{}))});
+  if(!res.ok){const t=await res.text();const e=new Error(t);e.status=res.status;e.wrongPass=/wrong passcode/i.test(t);throw e;}
+  const t=await res.text();return t?JSON.parse(t):null;
+}
+function deepMerge(a,b){if(!a||typeof a!=="object"||Array.isArray(a)||!b||typeof b!=="object"||Array.isArray(b))return b;const o=Object.assign({},a);for(const k in b)o[k]=deepMerge(a[k],b[k]);return o;}
+const chains={};
+function queue(path,fn){chains[path]=(chains[path]||Promise.resolve()).then(fn).catch(e=>{toast(e&&e.wrongPass?"The house passcode has changed. Reopen the app and enter the new one.":"Couldn't save. Check the connection and try again.");});}
+function save(path,data){queue(path,()=>rpc("ledger_write",{p_path:path,p_data:data}));}
+function patch(path,partial){queue(path,()=>rpc("ledger_merge",{p_path:path,p_data:partial}));}
+function del(path){queue(path,()=>rpc("ledger_delete",{p_path:path}));}
+
+/* ---------- derived ---------- */
+function dayDoc(k){return S.days[k]||{date:k,reading:{done:false,book:"",attendees:[]},prayers:{}};}
+function roomStatus(room){
+  if(!room.every)return {s:"none",days:null};
+  const st=S.rooms[room.id];const last=st&&st.last;
+  if(!last)return {s:"overdue",days:null};
+  const days=(Date.now()-new Date(last))/864e5;const f=Math.max(1,room.every||7);
+  return {s:days<f?"clean":days<2*f?"due":"overdue",days};
+}
+function dutyAssignee(duty,idx,monDate){
+  const R=cfg().residents;if(!R.length)return null;
+  if(!duty.rotate&&duty.fixed)return duty.fixed;
+  const T=cfg().rotaTable;if(T&&T.length){const row=T[(hafta(monDate)-1)%T.length];if(row&&row[duty.id])return row[duty.id];}
+  return R[((idx+hafta(monDate)-1)%R.length+R.length)%R.length].id;
+}
+function weekKey(m){return dkey(m);}
+function weekDoc(k){return S.weeks[k]||{start:k,done:{}};}
+function readingStreak(){
+  let n=0;const d=new Date();
+  const t=dayDoc(dkey(d));if(!(t.reading&&t.reading.done))d.setDate(d.getDate()-1);
+  for(;;){const x=S.days[dkey(d)];if(x&&x.reading&&x.reading.done){n++;d.setDate(d.getDate()-1);}else break;}
+  return n;
+}
+function weekDays(m){const out=[];for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);out.push(dkey(d));}return out;}
+function cemaatCount(k){const p=dayDoc(k).prayers||{};return AP().filter(([id])=>(p[id]||[]).length>=2).length;}
+
+/* ---------- rendering ---------- */
+const ICONS={
+  today:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>',
+  house:'<svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
+  vazife:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="m8 11 2.5 2.5L16 8M8 17h8"/></svg>',
+  records:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  setup:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
+};
+const TABS=[["today","Today"],["house","Temizlik"],["vazife","Vazife"],["records","Records"],["setup","Setup"]];
+function renderTabs(){
+  $("#tabs").innerHTML=TABS.map(([id,l])=>`<button data-tab="${id}" ${S.tab===id?'aria-current="page"':''}>${ICONS[id]}<span>${l}</span></button>`).join("");
+}
+function chips(ids,selected,action,extra){
+  return `<div class="chips">${cfg().residents.map(r=>`<button class="chip" data-a="${action}" data-id="${r.id}" ${extra||""} aria-pressed="${selected.includes(r.id)}">${esc(r.name)}</button>`).join("")}</div>`;
+}
+
+function statsHTML(){
+  const m=weekStart(0),wk=weekKey(m),wd=weekDoc(wk);
+  const duties=cfg().duties;const done=duties.filter(d=>wd.done&&wd.done[d.id]).length;
+  const days=weekDays(m).filter(k=>k<=today());
+  const cem=days.reduce((a,k)=>a+cemaatCount(k),0);
+  const overdue=cfg().rooms.filter(r=>roomStatus(r).s==="overdue").length;
+  return `<div class="stats">
+    <div class="stat"><span class="n">${readingStreak()}<small>nights</small></span><span class="l">Reading streak</span></div>
+    <div class="stat"><span class="n">${cem}<small>/${days.length*AP().length}</small></span><span class="l">Cemaat this week</span></div>
+    <div class="stat"><span class="n">${done}<small>/${duties.length}</small></span><span class="l">Vazife done this week</span></div>
+    <div class="stat"><span class="n">${overdue}</span><span class="l">Rooms overdue</span></div>
+  </div>`;
+}
+
+function viewToday(){
+  const k=today(),d=dayDoc(k),rd=d.reading||{};
+  const overdue=cfg().rooms.map(r=>({r,st:roomStatus(r)})).filter(x=>x.st.s==="due"||x.st.s==="overdue").sort((a,b)=>(b.st.days??1e9)/(b.r.every||7)-(a.st.days??1e9)/(a.r.every||7));
+  const m=weekStart(0),wd=weekDoc(weekKey(m));
+  const pending=cfg().duties.map((du,i)=>({du,who:dutyAssignee(du,i,m)})).filter(x=>!(wd.done&&wd.done[x.du.id]));
+  const notes=S.notes.filter(n=>!n.done);
+  return `<section class="view">
+    ${statsHTML()}
+    <div class="card">
+      <div class="row spread"><h3>Tonight's reading</h3>${rd.done?'<span class="pill on">Done</span>':'<span class="pill warn">Not yet</span>'}</div>
+      <label class="toggle" data-a="readDone"><span class="box ${rd.done?"on":""}"></span>Reading held tonight</label>
+      <input type="text" id="book" placeholder="Book and pages, e.g. Sözler, 12th Word, pp. 140–152" value="${esc(rd.book||"")}">
+      <div><div class="sub" style="margin:0 0 8px">Who attended</div>${chips(null,rd.attendees||[],"readAtt")}</div>
+    </div>
+    <div class="card">
+      <div class="row spread"><h3>Cemaat today</h3><span class="sub" style="margin:0">Tap who prayed. Two or more counts as cemaat.</span></div>
+      <div class="prayers">${AP().map(([id,name])=>{const a=(d.prayers||{})[id]||[];return `<div class="prayer"><span class="name">${name}</span>${chips(null,a,"pray",`data-p="${id}"`)}<span class="pill ${a.length>=2?"on":""}">${a.length>=2?"Cemaat":a.length===1?"Alone":"—"}</span></div>`;}).join("")}</div>
+    </div>
+    <div class="card">
+      <div class="row spread"><h3>House needs</h3><span class="sub" style="margin:0">Repairs, supplies, reminders</span></div>
+      <form class="row" id="noteForm"><input type="text" id="noteText" placeholder="e.g. Out of dish soap" style="flex:1"><button class="btn" type="submit">Add</button></form>
+      <div class="list">${notes.length?notes.map(n=>`<div class="item"><button class="box" data-a="noteDone" data-id="${n.id}" aria-label="Mark done"></button><div class="grow"><div class="t" style="font-weight:500">${esc(n.text)}</div><div class="m">Added ${ago(n.at)}</div></div></div>`).join(""):'<div class="empty">Nothing outstanding.</div>'}</div>
+    </div>
+  </section>`;
+}
+
+function viewHouse(){
+  const floors=cfg().floors;
+  const rooms=cfg().rooms.map(r=>({r,st:roomStatus(r)})).sort((a,b)=>({overdue:0,due:1,clean:2,none:3}[a.st.s]-{overdue:0,due:1,clean:2,none:3}[b.st.s]));
+  const sel=S.selRoom&&cfg().rooms.find(r=>r.id===S.selRoom);
+  return `<section class="view">
+    <div><h2>Temizlik</h2><p class="sub">Each rota place and when it was last cleaned. Tap a place to record a cleaning.</p></div>
+    <div class="legend"><span><i class="dot clean"></i>Clean</span><span><i class="dot due"></i>Due</span><span><i class="dot overdue"></i>Overdue</span></div>
+    <div id="sheet">${sel?sheetHTML(sel):""}</div>
+    <div class="card"><h3>All rooms</h3><div class="list">${rooms.map(({r,st})=>{const s=S.rooms[r.id];return `<div class="item"><span class="dot ${st.s}"></span><div class="grow"><div class="t">${esc(r.name)}</div><div class="m">${esc((floors.find(f=>f.n===r.floor)||{}).name||"Floor "+r.floor)} · ${s&&s.last?"cleaned "+ago(s.last)+" by "+esc(resName(s.by)):"no cleaning recorded"} · ${r.every?"every "+r.every+"d":esc(r.note||"not on the rota")}</div></div><button class="btn ghost sm" data-a="goRoom" data-id="${r.id}">Open</button></div>`;}).join("")}</div></div>
+  </section>`;
+}
+function sheetHTML(r){
+  const s=S.rooms[r.id]||{},st=roomStatus(r),hist=(s.history||[]).slice(-5).reverse();
+  const by=S.cleanBy&&cfg().residents.some(x=>x.id===S.cleanBy)?S.cleanBy:null;
+  return `<div class="sheet">
+    <div class="row spread"><h2>${esc(r.name)}</h2><span class="pill ${st.s==="overdue"?"on":st.s==="due"?"warn":""}">${st.s}</span></div>
+    <div class="sub" style="margin:0">${r.every?`Should be cleaned every ${r.every} day${r.every>1?"s":""}.`:esc(r.note||"Not on the cleaning rota.")} Last cleaned ${ago(s.last)}${s.by?" by "+esc(resName(s.by)):""}.</div>
+    <div><div class="sub" style="margin:0 0 8px">Cleaned by</div>${chips(null,by?[by]:[],"cleanBy")}</div>
+    <div class="row"><button class="btn" data-a="markClean" data-id="${r.id}" ${by?"":"disabled"}>Mark cleaned now</button>${hist.length?`<button class="btn ghost" data-a="undoClean" data-id="${r.id}">Undo last</button>`:""}<button class="btn ghost" data-a="closeSheet">Close</button></div>
+    ${hist.length?`<div class="list">${hist.map(h=>`<div class="item"><div class="grow m">${new Date(h.at).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</div><div class="m">${esc(resName(h.by))}</div></div>`).join("")}</div>`:""}
+  </div>`;
+}
+
+function rotaText(m,rows){return "Hafta "+hafta(m)+" vazifeleri ("+m.toLocaleDateString("tr-TR",{day:"numeric",month:"long"})+" haftası):\n"+rows.map(x=>x.du.title+": "+(x.who?resName(x.who):"-")).join("\n");}
+function viewVazife(){
+  const m=weekStart(S.weekOffset),wk=weekKey(m),wd=weekDoc(wk),end=new Date(m);end.setDate(end.getDate()+6);
+  const f=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  const rows=cfg().duties.map((du,i)=>({du,who:dutyAssignee(du,i,m),done:wd.done&&wd.done[du.id]}));
+  const per=cfg().residents.map(r=>{const mine=rows.filter(x=>x.who===r.id);return {r,total:mine.length,done:mine.filter(x=>x.done).length};});
+  return `<section class="view">
+    <div class="row spread"><div><h2>Vazife</h2><p class="sub">Duties change every Monday. The rota repeats every ${cycleLen()} weeks.</p></div>
+      <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · ${f(m)} – ${f(end)}${S.weekOffset===0?" · this week":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
+    <div class="card"><h3>Duties</h3><div class="list">${rows.length?rows.map(({du,who,done})=>`<div class="item"><button class="box ${done?"on":""}" data-a="dutyToggle" data-id="${du.id}" data-w="${wk}" aria-label="Toggle done"></button><div class="grow"><div class="t">${esc(du.title)}</div><div class="m">${esc(who?resName(who):"Unassigned")}${du.pts?" · "+du.pts+" puan":""}${done?" · done "+ago(done.at):""}</div></div><span class="pill ${done?"on":S.weekOffset<0?"warn":""}">${done?"Done":S.weekOffset<0?"Missed":"Pending"}</span></div>`).join(""):'<div class="empty">No duties yet. Add them under Setup.</div>'}</div></div>
+    <div class="card"><h3>Who has done theirs</h3><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Done</th><th>Progress</th><th class="num">Left</th></tr></thead><tbody>${per.map(p=>`<tr><td>${esc(p.r.name)}</td><td class="num">${p.done}/${p.total}</td><td style="width:40%"><div class="bar"><i style="width:${p.total?Math.round(p.done/p.total*100):0}%"></i></div></td><td class="num">${p.total-p.done}</td></tr>`).join("")}</tbody></table></div></div>
+  </section>`;
+}
+
+function viewRecords(){
+  const keys=[];const d=new Date();for(let i=0;i<14;i++){keys.push(dkey(d));d.setDate(d.getDate()-1);}
+  const m=weekStart(0),wdays=weekDays(m).filter(k=>k<=today());
+  const res=cfg().residents.map(r=>{
+    let pr=0,rd=0;wdays.forEach(k=>{const x=dayDoc(k);AP().forEach(([p])=>{if(((x.prayers||{})[p]||[]).includes(r.id))pr++;});if(x.reading&&x.reading.done&&(x.reading.attendees||[]).includes(r.id))rd++;});
+    return {r,pr,rd};
+  });
+  const cleanCount=k=>Object.values(S.rooms).reduce((a,s)=>a+((s.history||[]).filter(h=>dkey(new Date(h.at))===k).length),0);
+  return `<section class="view">
+    <div><h2>Records</h2><p class="sub">The last fourteen days, and each resident's week so far.</p></div>
+    <div class="card"><h3>This week by resident</h3><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Prayers attended</th><th class="num">Readings attended</th></tr></thead><tbody>${res.map(x=>`<tr><td>${esc(x.r.name)}</td><td class="num">${x.pr}/${wdays.length*AP().length}</td><td class="num">${x.rd}/${wdays.length}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="card"><h3>Daily log</h3><div class="scroll"><table><thead><tr><th>Day</th><th>Reading</th><th class="num">Cemaat</th><th class="num">Rooms cleaned</th><th>Book</th></tr></thead><tbody>${keys.map(k=>{const x=dayDoc(k),r=x.reading||{};return `<tr><td>${fmtDay(k)}</td><td>${r.done?`<span class="pill on">Held</span>`:`<span class="pill">—</span>`}</td><td class="num">${cemaatCount(k)}/${AP().length}</td><td class="num">${cleanCount(k)}</td><td style="white-space:normal;color:var(--muted)">${esc(r.book||"")}</td></tr>`;}).join("")}</tbody></table></div></div>
+  </section>`;
+}
+
+let draft=null;
+function draftHafta(){const a=draft.rotaAnchor?parseKey(draft.rotaAnchor):EPOCH;const n=Math.max(1,draft.residents.length);const w=weekIndex(weekStart(0))-weekIndex(a);return ((w%n)+n)%n+1;}
+function chipsP(){const on=draft.prayers||DEFAULT_CEMAAT;return `<div class="chips">${PRAYERS.map(([id,n])=>`<button class="chip" data-a="togPrayer" data-id="${id}" aria-pressed="${on.includes(id)}">${n}</button>`).join("")}</div>`;}
+function viewSetup(){
+  if(!draft)draft=JSON.parse(JSON.stringify(cfg()));
+  const fl=draft.floors;
+  return `<section class="view">
+    <div class="row spread"><div><h2>Setup</h2><p class="sub">Residents, rooms and duties. Rooms set to 0 days are shown but never counted as due.</p></div><div class="row"><button class="btn ghost" data-a="resetDraft">Discard</button><button class="btn" data-a="saveSetup">Save setup</button></div></div>
+    <div class="card"><h3>Prayers prayed in cemaat</h3><p class="sub" style="margin:0">Only these are tracked on the Today page and counted in the records.</p>${chipsP()}</div>
+    <div class="card"><h3>Residents</h3>
+      ${draft.residents.map((r,i)=>`<div class="editrow"><input type="text" id="res-${r.id}" data-f="res" data-i="${i}" value="${esc(r.name)}" aria-label="Resident name"><button class="x" data-a="rmRes" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+      <div><button class="btn ghost sm" data-a="addRes">Add resident</button></div>
+    </div>
+    <div class="card"><h3>Floors</h3>
+      ${fl.map((f,i)=>`<div class="editrow"><label>Level<input type="number" id="fl-n-${i}" data-f="fln" data-i="${i}" value="${f.n}"></label><input type="text" id="fl-name-${i}" data-f="flname" data-i="${i}" value="${esc(f.name)}" aria-label="Floor name"><button class="x" data-a="rmFloor" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+      <div><button class="btn ghost sm" data-a="addFloor">Add floor</button></div>
+    </div>
+    <div class="card"><h3>Rooms</h3>
+      ${draft.rooms.map((r,i)=>`<div class="editrow"><input type="text" id="rm-name-${r.id}" data-f="rm" data-k="name" data-i="${i}" value="${esc(r.name)}" aria-label="Room name">
+        <label>Floor<select id="rm-floor-${r.id}" data-f="rm" data-k="floor" data-i="${i}">${fl.map(f=>`<option value="${f.n}" ${f.n===r.floor?"selected":""}>${esc(f.name)}</option>`).join("")}</select></label>
+        <label>Every (days, 0 = off)<input type="number" min="0" id="rm-every-${r.id}" data-f="rm" data-k="every" data-i="${i}" value="${r.every}"></label>
+        <button class="x" data-a="rmRoom" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+      <div><button class="btn ghost sm" data-a="addRoom">Add room</button></div>
+    </div>
+    <div class="card"><h3>Vazife</h3>
+      ${draft.duties.map((du,i)=>`<div class="editrow"><input type="text" id="du-${du.id}" data-f="du" data-k="title" data-i="${i}" value="${esc(du.title)}" aria-label="Duty">
+        <label>Assigned<select id="du-as-${du.id}" data-f="du" data-k="assign" data-i="${i}"><option value="">Rotates weekly</option>${draft.residents.map(r=>`<option value="${r.id}" ${!du.rotate&&du.fixed===r.id?"selected":""}>Always ${esc(r.name)}</option>`).join("")}</select></label>
+        <button class="x" data-a="rmDuty" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
+      <div><button class="btn ghost sm" data-a="addDuty">Add duty</button></div>
+    </div>
+  </section>`;
+}
+
+function render(){
+  renderTabs();
+  $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  const app=$("#app");
+  const v={today:viewToday,house:viewHouse,vazife:viewVazife,records:viewRecords,setup:viewSetup}[S.tab]||viewToday;
+  const focusId=document.activeElement&&document.activeElement.id;
+  app.innerHTML=v();
+  if(focusId&&document.getElementById(focusId)&&S.tab!=="today")document.getElementById(focusId).focus();
+}
+
+/* ---------- actions ---------- */
+function patchDay(k,partial){partial.date=k;S.days[k]=deepMerge(dayDoc(k),partial);patch("days/"+k,partial);render();}
+function toggleIn(arr,id){const i=arr.indexOf(id);if(i>=0)arr.splice(i,1);else arr.push(id);return arr;}
+function markRooms(duty,by){(duty.rooms||[]).forEach(rid=>{const s=JSON.parse(JSON.stringify(S.rooms[rid]||{history:[]}));const at=new Date().toISOString();s.last=at;s.by=by;s.history=(s.history||[]).concat([{at,by}]).slice(-40);S.rooms[rid]=s;save("roomstate/"+rid,s);});}
+function dutyWho(id,wk){const m=parseKey(wk);const i=cfg().duties.findIndex(d=>d.id===id);return i<0?null:dutyAssignee(cfg().duties[i],i,m);}
+function setWeekDuty(wk,id,val){if(val){const du=cfg().duties.find(d=>d.id===id);const who=dutyWho(id,wk);if(du&&who){val.by=who;markRooms(du,who);}}const part={start:wk,done:{[id]:val||null}};S.weeks[wk]=deepMerge(weekDoc(wk),part);patch("weeks/"+wk,part);render();}
+const uid=p=>p+Math.random().toString(36).slice(2,8);
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-tab],[data-a]");if(!t)return;
+  if(t.dataset.tab){S.tab=t.dataset.tab;try{localStorage.setItem("lm.tab",S.tab);}catch(_){}render();window.scrollTo(0,0);return;}
+  const a=t.dataset.a,id=t.dataset.id,k=today();
+  switch(a){
+    case "readDone":patchDay(k,{reading:{done:!((dayDoc(k).reading||{}).done)}});break;
+    case "readAtt":patchDay(k,{reading:{attendees:toggleIn(((dayDoc(k).reading||{}).attendees||[]).slice(),id)}});break;
+    case "pray":{const p=t.dataset.p;patchDay(k,{prayers:{[p]:toggleIn(((dayDoc(k).prayers||{})[p]||[]).slice(),id)}});break;}
+    case "goRoom":S.selRoom=id;if(S.tab!=="house"){S.tab="house";try{localStorage.setItem("lm.tab","house");}catch(_){}}render();setTimeout(()=>{const sh=$("#sheet");sh&&sh.scrollIntoView({behavior:"smooth",block:"nearest"});},50);break;
+    case "closeSheet":S.selRoom=null;render();break;
+    case "cleanBy":S.cleanBy=S.cleanBy===id?null:id;try{localStorage.setItem("lm.me",S.cleanBy||"");}catch(_){}render();break;
+    case "markClean":{if(!S.cleanBy)return;const s=JSON.parse(JSON.stringify(S.rooms[id]||{history:[]}));const at=new Date().toISOString();s.last=at;s.by=S.cleanBy;s.history=(s.history||[]).concat([{at,by:S.cleanBy}]).slice(-40);S.rooms[id]=s;save("roomstate/"+id,s);toast("Recorded: "+(cfg().rooms.find(r=>r.id===id)||{}).name+" cleaned");render();break;}
+    case "undoClean":{const s=JSON.parse(JSON.stringify(S.rooms[id]||{history:[]}));s.history=(s.history||[]).slice(0,-1);const l=s.history[s.history.length-1];s.last=l?l.at:null;s.by=l?l.by:null;S.rooms[id]=s;save("roomstate/"+id,s);render();break;}
+    case "wk":S.weekOffset+=Number(t.dataset.d);render();break;
+    case "dutyToggle":{const wd=weekDoc(t.dataset.w);setWeekDuty(t.dataset.w,id,wd.done&&wd.done[id]?null:{at:new Date().toISOString()});break;}
+    case "dutyDone":setWeekDuty(t.dataset.w,id,{at:new Date().toISOString()});toast("Vazife marked done");break;
+    case "noteDone":{const n=S.notes.find(n=>n.id===id);if(n){n.done=true;save("notes/"+id,{text:n.text,at:n.at,done:true});render();}break;}
+    case "togPrayer":{const on=(draft.prayers||DEFAULT_CEMAAT).slice();const i=on.indexOf(id);if(i>=0){if(on.length===1){toast("Keep at least one prayer");return;}on.splice(i,1);}else on.push(id);draft.prayers=PRAYERS.map(p=>p[0]).filter(x=>on.includes(x));render();break;}
+    case "copyRota":{const txt=$("#rotaText").textContent;const ok=()=>toast("Copied. Paste it into the house group.");try{navigator.clipboard.writeText(txt).then(ok,()=>{const sel=getSelection();sel.selectAllChildren($("#rotaText"));toast("Selected. Copy it from the menu.");});}catch(_){const sel=getSelection();sel.selectAllChildren($("#rotaText"));toast("Selected. Copy it from the menu.");}break;}
+    case "setHafta":break;
+    case "addRes":draft.residents.push({id:uid("r"),name:"New resident"});render();break;
+    case "rmRes":draft.residents.splice(Number(t.dataset.i),1);render();break;
+    case "addFloor":{const n=draft.floors.length?Math.max(...draft.floors.map(f=>f.n))+1:0;draft.floors.push({n,name:"Floor "+n});render();break;}
+    case "rmFloor":{const f=draft.floors[Number(t.dataset.i)];if(draft.rooms.some(r=>r.floor===f.n)){toast("Move or remove that floor's rooms first");return;}draft.floors.splice(Number(t.dataset.i),1);render();break;}
+    case "addRoom":draft.rooms.push({id:uid("rm"),name:"New room",floor:(draft.floors[0]||{n:0}).n,x:0,z:0,w:3,d:3,every:7});render();break;
+    case "rmRoom":draft.rooms.splice(Number(t.dataset.i),1);render();break;
+    case "addDuty":draft.duties.push({id:uid("d"),title:"New duty",rotate:true});render();break;
+    case "rmDuty":draft.duties.splice(Number(t.dataset.i),1);render();break;
+    case "resetDraft":draft=null;render();toast("Changes discarded");break;
+    case "saveSetup":{
+      if(!draft.residents.length){toast("Add at least one resident");return;}
+      draft.residents.forEach(r=>{r.name=(r.name||"").trim()||"Unnamed";});
+      S.config=JSON.parse(JSON.stringify(draft));save("house/config",S.config);draft=null;toast("Setup saved");render();break;}
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;if(!draft||!t.dataset.f)return;const i=Number(t.dataset.i);
+  if(t.dataset.f==="res")draft.residents[i].name=t.value;
+  else if(t.dataset.f==="fln")draft.floors[i].n=Number(t.value);
+  else if(t.dataset.f==="hafta"){const m=weekStart(0);m.setDate(m.getDate()-7*(Number(t.value)-1));draft.rotaAnchor=dkey(m);}
+  else if(t.dataset.f==="flname")draft.floors[i].name=t.value;
+  else if(t.dataset.f==="rm"){const k=t.dataset.k;draft.rooms[i][k]=k==="name"?t.value:Number(t.value);if(k==="every")draft.rooms[i].every=Math.max(0,Number(t.value)||0);}
+  else if(t.dataset.f==="du"){if(t.dataset.k==="title")draft.duties[i].title=t.value;else{draft.duties[i].rotate=!t.value;draft.duties[i].fixed=t.value||null;}}
+});
+let bookT;
+document.addEventListener("change",e=>{if(e.target.id==="book"){clearTimeout(bookT);const v=e.target.value;patchDay(today(),{reading:{book:v}});}});
+document.addEventListener("submit",e=>{
+  if(e.target.id!=="noteForm")return;e.preventDefault();
+  const v=$("#noteText").value.trim();if(!v)return;
+  const n={id:uid("n"),text:v,at:new Date().toISOString(),done:false};S.notes.unshift(n);save("notes/"+n.id,{text:n.text,at:n.at,done:false});render();
+});
+
+/* ---------- boot ---------- */
+function ingest(rows){
+  const days={},rooms={},weeks={},notes=[];let config=null;
+  (rows||[]).forEach(x=>{const [c,id]=x.path.split("/");const d=x.data||{};
+    if(x.path==="house/config")config=d;else if(c==="days")days[id]=d;else if(c==="roomstate")rooms[id]=d;else if(c==="weeks")weeks[id]=d;else if(c==="notes")notes.push(Object.assign({id},d));});
+  notes.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  if(config)S.config=config;S.days=days;S.rooms=rooms;S.weeks=weeks;S.notes=notes;
+}
+function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="SELECT");}
+let busy=false;
+async function refresh(){
+  if(busy||!PASS)return;busy=true;
+  try{const rows=await rpc("ledger_read");ingest(rows);$("#banner").hidden=true;if(!typing()&&!draft)render();}
+  catch(e){if(e.wrongPass){PASS=null;try{localStorage.removeItem("lm.pass");}catch(_){}gate("That passcode didn't work.");}else{const b=$("#banner");b.hidden=false;b.textContent="Offline. Showing the last loaded records; changes will fail until the connection returns.";}}
+  finally{busy=false;}
+}
+function gate(msg){
+  $("#tabs").innerHTML="";
+  $("#app").innerHTML=`<section class="view"><div class="card" style="max-width:420px">
+    <h2>Enter the house passcode</h2><p class="sub" style="margin:0">Ask the ev imamı for it. You only need to enter it once on this phone.</p>
+    <form class="row" id="passForm"><input type="password" id="passIn" autocomplete="current-password" placeholder="Passcode" style="flex:1"><button class="btn" type="submit">Open</button></form>
+    ${msg?`<p class="sub" style="margin:0;color:var(--text)">${esc(msg)}</p>`:""}</div></section>`;
+}
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="passForm")return;e.preventDefault();
+  PASS=$("#passIn").value.trim();if(!PASS)return;
+  try{const rows=await rpc("ledger_read");try{localStorage.setItem("lm.pass",PASS);}catch(_){}ingest(rows);render();}
+  catch(err){PASS=null;gate(err.wrongPass?"That passcode didn't work.":"Couldn't reach the server. Check the connection and try again.");}
+});
+if(!CONF.supabaseUrl||!CONF.supabaseKey){
+  $("#app").innerHTML='<section class="view"><div class="card"><h2>Not connected yet</h2><p class="sub" style="margin:0">Fill in config.js with the Supabase project URL and key, then reload.</p></div></section>';
+}else if(!PASS){gate("");}
+else{render();refresh();}
+setInterval(()=>{if(document.visibilityState==="visible")refresh();},15000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+})();
+</script>
+
+</body>
+</html>
