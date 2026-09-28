@@ -311,7 +311,7 @@ const ICONS={
   records:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   setup:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
-const TABS=[["today","Today"],["istisare","İstişare"],["vazife","Vazife"],["records","Records"],["setup","Setup"]];
+const TABS=[["today","Today"],["istisare","İstişare"],["vazife","Cleaning"],["records","Records"],["setup","Setup"]];
 function renderTabs(){
   const el=$("#tabs");
   if(el.dataset.v!=="2"||!el.children.length){el.innerHTML=TABS.map(([id,l])=>`<button data-tab="${id}">${ICONS[id]}<span>${l}</span></button>`).join("");el.dataset.v="2";}
@@ -321,17 +321,25 @@ function chips(ids,selected,action,extra){
   return `<div class="chips">${cfg().residents.map(r=>`<button class="chip" data-a="${action}" data-id="${r.id}" ${extra||""} aria-pressed="${selected.includes(r.id)}">${esc(r.name)}</button>`).join("")}</div>`;
 }
 
+// Duties from past weeks (since the rota started) that were never ticked off.
+function overdueCleanings(){
+  const D=cfg().duties;if(!D.length)return 0;
+  const start=cfg().rotaAnchor||weekKey(weekStart(0));let n=0;
+  for(let o=-1;o>=-12;o--){const m=weekStart(o);if(weekKey(m)<start)break;const wd=weekDoc(weekKey(m));
+    D.forEach(du=>{if(!(wd.done&&wd.done[du.id]))n++;});}
+  return n;
+}
 function statsHTML(){
   const m=weekStart(0),wk=weekKey(m),wd=weekDoc(wk);
   const duties=cfg().duties;const done=duties.filter(d=>wd.done&&wd.done[d.id]).length;
   const days=weekDays(m).filter(k=>k<=today());
   const cem=days.reduce((a,k)=>a+cemaatCount(k),0);
-  const overdue=cfg().rooms.filter(r=>roomStatus(r).s==="overdue").length;
+  const overdue=overdueCleanings();
   return `<div class="stats">
     <div class="stat"><span class="n">${readingStreak()}<small>nights</small></span><span class="l">Reading streak</span></div>
     <div class="stat"><span class="n">${cem}<small>/${7*AP().length}</small></span><span class="l">Cemaat this week</span></div>
-    <div class="stat"><span class="n">${done}<small>/${duties.length}</small></span><span class="l">Vazife done this week</span></div>
-    <div class="stat"><span class="n">${overdue}</span><span class="l">Rooms overdue</span></div>
+    <div class="stat"><span class="n">${done}<small>/${duties.length}</small></span><span class="l">Cleaning done this week</span></div>
+    <div class="stat"><span class="n">${overdue}</span><span class="l">Cleanings overdue</span></div>
   </div>`;
 }
 
@@ -402,7 +410,7 @@ function viewVazife(){
   const rows=cfg().duties.map((du,i)=>({du,who:dutyAssignee(du,i,m),done:wd.done&&wd.done[du.id]}));
   const per=cfg().residents.map(r=>{const mine=rows.filter(x=>x.who===r.id);return {r,total:mine.length,done:mine.filter(x=>x.done).length};});
   return `<section class="view">
-    <div class="row spread"><div><h2>Vazife</h2><p class="sub">Duties change every Monday. The rota repeats every ${cycleLen()} weeks.</p></div>
+    <div class="row spread"><div><h2>Cleaning</h2><p class="sub">Duties change every Monday. The rota repeats every ${cycleLen()} weeks.</p></div>
       <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · ${f(m)} – ${f(end)}${S.weekOffset===0?" · now":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
     <div class="card"><h3>Duties</h3><div class="list">${rows.length?rows.map(({du,who,done})=>`<div class="item"><button class="box ${done?"on":""}" data-a="dutyToggle" data-id="${du.id}" data-w="${wk}" aria-label="Toggle done"></button><div class="grow"><div class="t">${esc(du.title)}</div><div class="m">${esc(who?resName(who):"Unassigned")}${du.pts?" · "+du.pts+" puan":""}${done?" · done "+ago(done.at):""}</div></div><span class="pill ${done?"on":S.weekOffset<0?"warn":""}">${done?"Done":S.weekOffset<0?"Missed":"Pending"}</span></div>`).join(""):'<div class="empty">No duties yet. Add them under Setup.</div>'}</div></div>
     ${rotaCard(m)}
@@ -426,7 +434,7 @@ function pastWeeksCard(){
   const f=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
   const keys=Object.keys(S.days).concat(Object.keys(S.weeks)).sort();const firstMon=keys.length?weekKey(monday(parseKey(keys[0]))):weekKey(weekStart(0));
   const rows=[];for(let o=0;o>-8;o--){const w=weekSummary(o);if(!w.days||weekKey(w.m)<firstMon)break;rows.push({o,w});}
-  return `<div class="card"><h3>Past weeks</h3><div class="scroll"><table class="weeks"><thead><tr><th>Week</th><th class="num">Reading</th><th class="num">Cemaat</th><th class="num">Vazife</th></tr></thead><tbody>${rows.map(({o,w})=>`<tr class="${S.recWeek===o?"sel":""}" data-a="recWeek" data-o="${o}" tabindex="0"><td style="white-space:normal"><b>Hafta ${hafta(w.m)}</b><div class="m">${f(w.m)} – ${f(w.end)}</div><div class="m">${w.ist?"İstişare held "+parseKey(w.ist).toLocaleDateString("en-GB",{weekday:"short"}):w.current?"İstişare not yet held":"No istişare"}</div><div class="m">${w.current?"In progress":w.missed.length?"Not done: "+esc(w.missed.join(", ")):"All vazife done"}</div></td><td class="num">${w.reading}/7</td><td class="num">${w.cem}/${w.max}</td><td class="num">${w.done}/${w.total}</td></tr>`).join("")}</tbody></table></div></div>`;
+  return `<div class="card"><h3>Past weeks</h3><div class="scroll"><table class="weeks"><thead><tr><th>Week</th><th class="num">Reading</th><th class="num">Cemaat</th><th class="num">Cleaning</th></tr></thead><tbody>${rows.map(({o,w})=>`<tr class="${S.recWeek===o?"sel":""}" data-a="recWeek" data-o="${o}" tabindex="0"><td style="white-space:normal"><b>Hafta ${hafta(w.m)}</b><div class="m">${f(w.m)} – ${f(w.end)}</div><div class="m">${w.ist?"İstişare held "+parseKey(w.ist).toLocaleDateString("en-GB",{weekday:"short"}):w.current?"İstişare not yet held":"No istişare"}</div><div class="m">${w.current?"In progress":w.missed.length?"Not done: "+esc(w.missed.join(", ")):"All cleaning done"}</div></td><td class="num">${w.reading}/7</td><td class="num">${w.cem}/${w.max}</td><td class="num">${w.done}/${w.total}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
 function viewRecords(){
   const keys=[];const d=new Date();for(let i=0;i<14;i++){keys.push(dkey(d));d.setDate(d.getDate()-1);}
@@ -451,13 +459,13 @@ function viewSetup(){
   if(!draft)draft=JSON.parse(JSON.stringify(cfg()));
   const fl=draft.floors;
   return `<section class="view">
-    <div class="row spread"><div><h2>Setup</h2><p class="sub">Residents, prayers and vazife.</p></div><div class="row"><button class="btn ghost" data-a="resetDraft">Discard</button><button class="btn" data-a="saveSetup">Save setup</button></div></div>
+    <div class="row spread"><div><h2>Setup</h2><p class="sub">Residents, prayers and cleaning duties.</p></div><div class="row"><button class="btn ghost" data-a="resetDraft">Discard</button><button class="btn" data-a="saveSetup">Save setup</button></div></div>
     <div class="card"><h3>Prayers prayed in cemaat</h3><p class="sub" style="margin:0">Only these are tracked on the Today page and counted in the records.</p>${chipsP()}</div>
     <div class="card"><h3>Residents</h3>
       ${draft.residents.map((r,i)=>`<div class="editrow"><input type="text" id="res-${r.id}" data-f="res" data-i="${i}" value="${esc(r.name)}" aria-label="Resident name"><button class="x" data-a="rmRes" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
       <div><button class="btn ghost sm" data-a="addRes">Add resident</button></div>
     </div>
-    <div class="card"><h3>Vazife</h3>${draft.rotaTable&&draft.rotaTable.length?'<p class="sub" style="margin:0">Who does what each week follows the full rota on the Vazife tab.</p>':""}
+    <div class="card"><h3>Cleaning duties</h3>${draft.rotaTable&&draft.rotaTable.length?'<p class="sub" style="margin:0">Who does what each week follows the full rota on the Cleaning tab.</p>':""}
       ${draft.duties.map((du,i)=>`<div class="editrow"><input type="text" id="du-${du.id}" data-f="du" data-k="title" data-i="${i}" value="${esc(du.title)}" aria-label="Duty">
         ${draft.rotaTable&&draft.rotaTable.length?`<label>Puan<input type="number" min="0" id="du-pts-${du.id}" data-f="du" data-k="pts" data-i="${i}" value="${du.pts||0}"></label>`:`<label>Assigned<select id="du-as-${du.id}" data-f="du" data-k="assign" data-i="${i}"><option value="">Rotates weekly</option>${draft.residents.map(r=>`<option value="${r.id}" ${!du.rotate&&du.fixed===r.id?"selected":""}>Always ${esc(r.name)}</option>`).join("")}</select></label>`}
         <button class="x" data-a="rmDuty" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
@@ -566,7 +574,7 @@ document.addEventListener("click",e=>{
     case "recWeek":S.recWeek=Number(t.dataset.o);render();break;
     case "wk":S.weekOffset+=Number(t.dataset.d);render();break;
     case "dutyToggle":{const wd=weekDoc(t.dataset.w);setWeekDuty(t.dataset.w,id,wd.done&&wd.done[id]?null:{at:new Date().toISOString()});break;}
-    case "dutyDone":setWeekDuty(t.dataset.w,id,{at:new Date().toISOString()});toast("Vazife marked done");break;
+    case "dutyDone":setWeekDuty(t.dataset.w,id,{at:new Date().toISOString()});toast("Cleaning marked done");break;
     case "noteDone":{const n=S.notes.find(n=>n.id===id);if(n){n.done=true;save("notes/"+id,{text:n.text,at:n.at,done:true});render();}break;}
     case "togPrayer":{const on=(draft.prayers||DEFAULT_CEMAAT).slice();const i=on.indexOf(id);if(i>=0){if(on.length===1){toast("Keep at least one prayer");return;}on.splice(i,1);}else on.push(id);draft.prayers=PRAYERS.map(p=>p[0]).filter(x=>on.includes(x));render();break;}
     case "copyRota":{const txt=$("#rotaText").textContent;const ok=()=>toast("Copied. Paste it into the house group.");try{navigator.clipboard.writeText(txt).then(ok,()=>{const sel=getSelection();sel.selectAllChildren($("#rotaText"));toast("Selected. Copy it from the menu.");});}catch(_){const sel=getSelection();sel.selectAllChildren($("#rotaText"));toast("Selected. Copy it from the menu.");}break;}
