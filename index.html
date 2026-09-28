@@ -97,6 +97,16 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-s
 th{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 td.num,th.num{text-align:right;font-family:var(--mono);font-size:13px}
 .scroll{overflow-x:auto}
+table.weeks tr[data-a]{cursor:pointer}table.weeks tr[data-a]:hover td{background:var(--panel2)}
+table.weeks tr.sel td{background:var(--panel2)}table.weeks tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--white)}
+table.weeks .m{font-size:12px;color:var(--muted);font-weight:400}
+table.rota th{white-space:normal;min-width:92px;vertical-align:bottom;line-height:1.35}
+table.rota td{font-size:13px}
+table.rota td:first-child,table.rota th:first-child{position:sticky;left:0;background:var(--panel);z-index:1;padding-right:14px}
+table.rota tr.cur td{background:var(--white);color:var(--ink)}
+table.rota tr.cur td:first-child{border-radius:6px 0 0 6px}table.rota tr.cur td:last-child{border-radius:0 6px 6px 0}
+.ptag{display:inline-block;font:500 10px var(--mono);border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--muted);letter-spacing:0}
+.hchip{display:inline-block;margin-top:6px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--white);color:var(--ink);border-radius:999px;padding:3px 9px}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px}
 .bar i{display:block;height:100%;background:var(--white)}
 .editrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
@@ -170,7 +180,7 @@ const DEFAULT_CEMAAT=["sabah","aksam","yatsi"];
 const AP=()=>{const on=cfg().prayers||DEFAULT_CEMAAT;return PRAYERS.filter(([id])=>on.includes(id));};
 
 /* ---------- state ---------- */
-const S={config:null,days:{},rooms:{},weeks:{},notes:[],tab:"today",weekOffset:0,selRoom:null,floor:"all",live:false,cleanBy:null};
+const S={recWeek:0,config:null,days:{},rooms:{},weeks:{},notes:[],tab:"today",weekOffset:0,selRoom:null,floor:"all",live:false,cleanBy:null};
 try{S.tab=localStorage.getItem("lm.tab")||"today";S.cleanBy=localStorage.getItem("lm.me")||null;}catch(e){}
 
 const cfg=()=>S.config||DEFAULT_CONFIG;
@@ -197,13 +207,15 @@ const CONF=window.LEDGER_CONFIG||{};
 let PASS=null;try{PASS=localStorage.getItem("lm.pass");}catch(_){}
 function headers(){const h={"Content-Type":"application/json",apikey:CONF.supabaseKey};if(String(CONF.supabaseKey||"").startsWith("eyJ"))h.Authorization="Bearer "+CONF.supabaseKey;return h;}
 async function rpc(fn,body){
-  const res=await fetch(CONF.supabaseUrl.replace(/\/$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:headers(),body:JSON.stringify(Object.assign({p_pass:PASS},body||{}))});
+  let res;
+  try{res=await fetch(CONF.supabaseUrl.replace(/\/(rest\/v1\/?)?$/,"")+"/rest/v1/rpc/"+fn,{method:"POST",headers:headers(),body:JSON.stringify(Object.assign({p_pass:PASS},body||{}))});}
+  catch(e){const x=new Error("no connection");x.status=0;throw x;}
   if(!res.ok){const t=await res.text();const e=new Error(t);e.status=res.status;e.wrongPass=/wrong passcode/i.test(t);throw e;}
   const t=await res.text();return t?JSON.parse(t):null;
 }
 function deepMerge(a,b){if(!a||typeof a!=="object"||Array.isArray(a)||!b||typeof b!=="object"||Array.isArray(b))return b;const o=Object.assign({},a);for(const k in b)o[k]=deepMerge(a[k],b[k]);return o;}
 const chains={};
-function queue(path,fn){chains[path]=(chains[path]||Promise.resolve()).then(fn).catch(e=>{toast(e&&e.wrongPass?"The house passcode has changed. Reopen the app and enter the new one.":"Couldn't save. Check the connection and try again.");});}
+function queue(path,fn){chains[path]=(chains[path]||Promise.resolve()).then(fn).catch(e=>{toast(e&&e.wrongPass?"The house passcode has changed. Reopen the site and enter the new one.":"Couldn't save. Check the connection and try again.");});}
 function save(path,data){queue(path,()=>rpc("ledger_write",{p_path:path,p_data:data}));}
 function patch(path,partial){queue(path,()=>rpc("ledger_merge",{p_path:path,p_data:partial}));}
 function del(path){queue(path,()=>rpc("ledger_delete",{p_path:path}));}
@@ -225,10 +237,11 @@ function dutyAssignee(duty,idx,monDate){
 }
 function weekKey(m){return dkey(m);}
 function weekDoc(k){return S.weeks[k]||{start:k,done:{}};}
+const held=x=>!!(x&&x.reading&&(x.reading.done||x.reading.istisare));
 function readingStreak(){
   let n=0;const d=new Date();
-  const t=dayDoc(dkey(d));if(!(t.reading&&t.reading.done))d.setDate(d.getDate()-1);
-  for(;;){const x=S.days[dkey(d)];if(x&&x.reading&&x.reading.done){n++;d.setDate(d.getDate()-1);}else break;}
+  const t=dayDoc(dkey(d));if(!held(t))d.setDate(d.getDate()-1);
+  for(;;){const x=S.days[dkey(d)];if(held(x)){n++;d.setDate(d.getDate()-1);}else break;}
   return n;
 }
 function weekDays(m){const out=[];for(let i=0;i<7;i++){const d=new Date(m);d.setDate(d.getDate()+i);out.push(dkey(d));}return out;}
@@ -273,8 +286,9 @@ function viewToday(){
   return `<section class="view">
     ${statsHTML()}
     <div class="card">
-      <div class="row spread"><h3>Tonight's reading</h3>${rd.done?'<span class="pill on">Done</span>':'<span class="pill warn">Not yet</span>'}</div>
-      <label class="toggle" data-a="readDone"><span class="box ${rd.done?"on":""}"></span>Reading held tonight</label>
+      <div class="row spread"><h3>Tonight's reading</h3>${rd.istisare?'<span class="pill on">İstişare</span>':rd.done?'<span class="pill on">Done</span>':'<span class="pill warn">Not yet</span>'}</div>
+      <label class="toggle" data-a="readDone"><span class="box ${rd.done?"on":""}"></span>Reading</label>
+      <label class="toggle" data-a="readIst"><span class="box ${rd.istisare?"on":""}"></span>İstişare</label>
       <input type="text" id="book" placeholder="Book and pages, e.g. Sözler, 12th Word, pp. 140–152" value="${esc(rd.book||"")}">
       <div><div class="sub" style="margin:0 0 8px">Who attended</div>${chips(null,rd.attendees||[],"readAtt")}</div>
     </div>
@@ -314,6 +328,16 @@ function sheetHTML(r){
 }
 
 function rotaText(m,rows){return "Hafta "+hafta(m)+" vazifeleri ("+m.toLocaleDateString("tr-TR",{day:"numeric",month:"long"})+" haftası):\n"+rows.map(x=>x.du.title+": "+(x.who?resName(x.who):"-")).join("\n");}
+function rotaCard(m){
+  const D=cfg().duties;if(!D.length)return "";
+  const n=cycleLen(),cur=hafta(m),first=new Date(m);first.setDate(first.getDate()-7*(cur-1));
+  const short=t=>esc(String(t).split(" / ")[0]);
+  let rows="";
+  for(let h=1;h<=n;h++){const wm=new Date(first);wm.setDate(wm.getDate()+7*(h-1));
+    rows+=`<tr class="${h===cur?"cur":""}"><td><b>Hafta ${h}</b></td>${D.map((du,i)=>`<td>${esc(resName(dutyAssignee(du,i,wm)))}</td>`).join("")}</tr>`;}
+  return `<div class="card"><div class="row spread"><h3>Full rota</h3><span class="sub" style="margin:0">Highlighted: the week shown above</span></div>
+    <div class="scroll"><table class="rota"><thead><tr><th></th>${D.map(du=>`<th title="${esc(du.title)}">${short(du.title)}${du.pts?` <span class="ptag">${du.pts}</span>`:""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
 function viewVazife(){
   const m=weekStart(S.weekOffset),wk=weekKey(m),wd=weekDoc(wk),end=new Date(m);end.setDate(end.getDate()+6);
   const f=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
@@ -321,24 +345,44 @@ function viewVazife(){
   const per=cfg().residents.map(r=>{const mine=rows.filter(x=>x.who===r.id);return {r,total:mine.length,done:mine.filter(x=>x.done).length};});
   return `<section class="view">
     <div class="row spread"><div><h2>Vazife</h2><p class="sub">Duties change every Monday. The rota repeats every ${cycleLen()} weeks.</p></div>
-      <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · ${f(m)} – ${f(end)}${S.weekOffset===0?" · this week":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
+      <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · ${f(m)} – ${f(end)}${S.weekOffset===0?" · now":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
     <div class="card"><h3>Duties</h3><div class="list">${rows.length?rows.map(({du,who,done})=>`<div class="item"><button class="box ${done?"on":""}" data-a="dutyToggle" data-id="${du.id}" data-w="${wk}" aria-label="Toggle done"></button><div class="grow"><div class="t">${esc(du.title)}</div><div class="m">${esc(who?resName(who):"Unassigned")}${du.pts?" · "+du.pts+" puan":""}${done?" · done "+ago(done.at):""}</div></div><span class="pill ${done?"on":S.weekOffset<0?"warn":""}">${done?"Done":S.weekOffset<0?"Missed":"Pending"}</span></div>`).join(""):'<div class="empty">No duties yet. Add them under Setup.</div>'}</div></div>
+    ${rotaCard(m)}
     <div class="card"><h3>Who has done theirs</h3><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Done</th><th>Progress</th><th class="num">Left</th></tr></thead><tbody>${per.map(p=>`<tr><td>${esc(p.r.name)}</td><td class="num">${p.done}/${p.total}</td><td style="width:40%"><div class="bar"><i style="width:${p.total?Math.round(p.done/p.total*100):0}%"></i></div></td><td class="num">${p.total-p.done}</td></tr>`).join("")}</tbody></table></div></div>
   </section>`;
 }
 
+function weekSummary(off){
+  const m=weekStart(off),end=new Date(m);end.setDate(end.getDate()+6);
+  const days=weekDays(m).filter(k=>k<=today());
+  const reading=days.filter(k=>{const x=S.days[k];return held(x);}).length;
+  const ist=days.find(k=>{const x=S.days[k];return x&&x.reading&&x.reading.istisare;});
+  const cem=days.reduce((a,k)=>a+cemaatCount(k),0);
+  const wd=weekDoc(weekKey(m));const D=cfg().duties;
+  const rows=D.map((du,i)=>({who:dutyAssignee(du,i,m),done:wd.done&&wd.done[du.id]}));
+  const done=rows.filter(x=>x.done).length;
+  const missed=[...new Set(rows.filter(x=>!x.done&&x.who).map(x=>resName(x.who)))];
+  return {m,end,ist,days:days.length,reading,cem,max:days.length*AP().length,done,total:D.length,missed,current:off===0};
+}
+function pastWeeksCard(){
+  const f=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  const keys=Object.keys(S.days).concat(Object.keys(S.weeks)).sort();const firstMon=keys.length?weekKey(monday(parseKey(keys[0]))):weekKey(weekStart(0));
+  const rows=[];for(let o=0;o>-8;o--){const w=weekSummary(o);if(!w.days||weekKey(w.m)<firstMon)break;rows.push({o,w});}
+  return `<div class="card"><h3>Past weeks</h3><div class="scroll"><table class="weeks"><thead><tr><th>Week</th><th class="num">Reading</th><th class="num">Cemaat</th><th class="num">Vazife</th></tr></thead><tbody>${rows.map(({o,w})=>`<tr class="${S.recWeek===o?"sel":""}" data-a="recWeek" data-o="${o}" tabindex="0"><td style="white-space:normal"><b>Hafta ${hafta(w.m)}</b><div class="m">${f(w.m)} – ${f(w.end)}</div><div class="m">${w.ist?"İstişare held "+parseKey(w.ist).toLocaleDateString("en-GB",{weekday:"short"}):w.current?"İstişare not yet held":"No istişare"}</div><div class="m">${w.current?"In progress":w.missed.length?"Not done: "+esc(w.missed.join(", ")):"All vazife done"}</div></td><td class="num">${w.reading}/${w.days}</td><td class="num">${w.cem}/${w.max}</td><td class="num">${w.done}/${w.total}</td></tr>`).join("")}</tbody></table></div></div>`;
+}
 function viewRecords(){
   const keys=[];const d=new Date();for(let i=0;i<14;i++){keys.push(dkey(d));d.setDate(d.getDate()-1);}
-  const m=weekStart(0),wdays=weekDays(m).filter(k=>k<=today());
+  const m=weekStart(S.recWeek),wdays=weekDays(m).filter(k=>k<=today());
   const res=cfg().residents.map(r=>{
-    let pr=0,rd=0;wdays.forEach(k=>{const x=dayDoc(k);AP().forEach(([p])=>{if(((x.prayers||{})[p]||[]).includes(r.id))pr++;});if(x.reading&&x.reading.done&&(x.reading.attendees||[]).includes(r.id))rd++;});
+    let pr=0,rd=0;wdays.forEach(k=>{const x=dayDoc(k);AP().forEach(([p])=>{if(((x.prayers||{})[p]||[]).includes(r.id))pr++;});if(held(x)&&(x.reading.attendees||[]).includes(r.id))rd++;});
     return {r,pr,rd};
   });
   const cleanCount=k=>Object.values(S.rooms).reduce((a,s)=>a+((s.history||[]).filter(h=>dkey(new Date(h.at))===k).length),0);
   return `<section class="view">
-    <div><h2>Records</h2><p class="sub">The last fourteen days, and each resident's week so far.</p></div>
-    <div class="card"><h3>This week by resident</h3><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Prayers attended</th><th class="num">Readings attended</th></tr></thead><tbody>${res.map(x=>`<tr><td>${esc(x.r.name)}</td><td class="num">${x.pr}/${wdays.length*AP().length}</td><td class="num">${x.rd}/${wdays.length}</td></tr>`).join("")}</tbody></table></div></div>
-    <div class="card"><h3>Daily log</h3><div class="scroll"><table><thead><tr><th>Day</th><th>Reading</th><th class="num">Cemaat</th><th class="num">Rooms cleaned</th><th>Book</th></tr></thead><tbody>${keys.map(k=>{const x=dayDoc(k),r=x.reading||{};return `<tr><td>${fmtDay(k)}</td><td>${r.done?`<span class="pill on">Held</span>`:`<span class="pill">—</span>`}</td><td class="num">${cemaatCount(k)}/${AP().length}</td><td class="num">${cleanCount(k)}</td><td style="white-space:normal;color:var(--muted)">${esc(r.book||"")}</td></tr>`;}).join("")}</tbody></table></div></div>
+    <div><h2>Records</h2><p class="sub">Week by week, each resident's attendance, and the last fourteen days. Tap a week to see who attended.</p></div>
+    ${pastWeeksCard()}
+    <div class="card"><div class="row spread"><h3>${S.recWeek===0?"This week":"Hafta "+hafta(m)+" · "+m.toLocaleDateString("en-GB",{day:"numeric",month:"short"})} by resident</h3>${S.recWeek!==0?'<button class="btn ghost sm" data-a="recWeek" data-o="0">Back to this week</button>':""}</div><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Prayers</th><th class="num">Readings</th></tr></thead><tbody>${res.map(x=>`<tr><td>${esc(x.r.name)}</td><td class="num">${x.pr}/${wdays.length*AP().length}</td><td class="num">${x.rd}/${wdays.length}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="card"><h3>Daily log</h3><div class="scroll"><table><thead><tr><th>Day</th><th>Reading</th><th class="num">Cemaat</th><th class="num">Rooms cleaned</th><th>Book</th></tr></thead><tbody>${keys.map(k=>{const x=dayDoc(k),r=x.reading||{};return `<tr><td>${fmtDay(k)}</td><td>${r.istisare?`<span class="pill on">İstişare</span>`:r.done?`<span class="pill on">Held</span>`:`<span class="pill">—</span>`}</td><td class="num">${cemaatCount(k)}/${AP().length}</td><td class="num">${cleanCount(k)}</td><td style="white-space:normal;color:var(--muted)">${esc(r.book||"")}</td></tr>`;}).join("")}</tbody></table></div></div>
   </section>`;
 }
 
@@ -349,15 +393,11 @@ function viewSetup(){
   if(!draft)draft=JSON.parse(JSON.stringify(cfg()));
   const fl=draft.floors;
   return `<section class="view">
-    <div class="row spread"><div><h2>Setup</h2><p class="sub">Residents, rooms and duties. Rooms set to 0 days are shown but never counted as due.</p></div><div class="row"><button class="btn ghost" data-a="resetDraft">Discard</button><button class="btn" data-a="saveSetup">Save setup</button></div></div>
+    <div class="row spread"><div><h2>Setup</h2><p class="sub">Residents, cleaning places and vazife. A place set to 0 days is listed but never counted as due.</p></div><div class="row"><button class="btn ghost" data-a="resetDraft">Discard</button><button class="btn" data-a="saveSetup">Save setup</button></div></div>
     <div class="card"><h3>Prayers prayed in cemaat</h3><p class="sub" style="margin:0">Only these are tracked on the Today page and counted in the records.</p>${chipsP()}</div>
     <div class="card"><h3>Residents</h3>
       ${draft.residents.map((r,i)=>`<div class="editrow"><input type="text" id="res-${r.id}" data-f="res" data-i="${i}" value="${esc(r.name)}" aria-label="Resident name"><button class="x" data-a="rmRes" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
       <div><button class="btn ghost sm" data-a="addRes">Add resident</button></div>
-    </div>
-    <div class="card"><h3>Floors</h3>
-      ${fl.map((f,i)=>`<div class="editrow"><label>Level<input type="number" id="fl-n-${i}" data-f="fln" data-i="${i}" value="${f.n}"></label><input type="text" id="fl-name-${i}" data-f="flname" data-i="${i}" value="${esc(f.name)}" aria-label="Floor name"><button class="x" data-a="rmFloor" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
-      <div><button class="btn ghost sm" data-a="addFloor">Add floor</button></div>
     </div>
     <div class="card"><h3>Rooms</h3>
       ${draft.rooms.map((r,i)=>`<div class="editrow"><input type="text" id="rm-name-${r.id}" data-f="rm" data-k="name" data-i="${i}" value="${esc(r.name)}" aria-label="Room name">
@@ -366,9 +406,9 @@ function viewSetup(){
         <button class="x" data-a="rmRoom" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
       <div><button class="btn ghost sm" data-a="addRoom">Add room</button></div>
     </div>
-    <div class="card"><h3>Vazife</h3>
+    <div class="card"><h3>Vazife</h3>${draft.rotaTable&&draft.rotaTable.length?'<p class="sub" style="margin:0">Who does what each week follows the full rota on the Vazife tab.</p>':""}
       ${draft.duties.map((du,i)=>`<div class="editrow"><input type="text" id="du-${du.id}" data-f="du" data-k="title" data-i="${i}" value="${esc(du.title)}" aria-label="Duty">
-        <label>Assigned<select id="du-as-${du.id}" data-f="du" data-k="assign" data-i="${i}"><option value="">Rotates weekly</option>${draft.residents.map(r=>`<option value="${r.id}" ${!du.rotate&&du.fixed===r.id?"selected":""}>Always ${esc(r.name)}</option>`).join("")}</select></label>
+        ${draft.rotaTable&&draft.rotaTable.length?`<label>Puan<input type="number" min="0" id="du-pts-${du.id}" data-f="du" data-k="pts" data-i="${i}" value="${du.pts||0}"></label>`:`<label>Assigned<select id="du-as-${du.id}" data-f="du" data-k="assign" data-i="${i}"><option value="">Rotates weekly</option>${draft.residents.map(r=>`<option value="${r.id}" ${!du.rotate&&du.fixed===r.id?"selected":""}>Always ${esc(r.name)}</option>`).join("")}</select></label>`}
         <button class="x" data-a="rmDuty" data-i="${i}" aria-label="Remove">×</button></div>`).join("")}
       <div><button class="btn ghost sm" data-a="addDuty">Add duty</button></div>
     </div>
@@ -377,7 +417,7 @@ function viewSetup(){
 
 function render(){
   renderTabs();
-  $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+(cfg().duties.length?`<br><span class="hchip">Hafta ${hafta(weekStart(0))}</span>`:"");
   const app=$("#app");
   const v={today:viewToday,house:viewHouse,vazife:viewVazife,records:viewRecords,setup:viewSetup}[S.tab]||viewToday;
   const focusId=document.activeElement&&document.activeElement.id;
@@ -398,6 +438,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.tab){S.tab=t.dataset.tab;try{localStorage.setItem("lm.tab",S.tab);}catch(_){}render();window.scrollTo(0,0);return;}
   const a=t.dataset.a,id=t.dataset.id,k=today();
   switch(a){
+    case "readIst":patchDay(k,{reading:{istisare:!((dayDoc(k).reading||{}).istisare)}});break;
     case "readDone":patchDay(k,{reading:{done:!((dayDoc(k).reading||{}).done)}});break;
     case "readAtt":patchDay(k,{reading:{attendees:toggleIn(((dayDoc(k).reading||{}).attendees||[]).slice(),id)}});break;
     case "pray":{const p=t.dataset.p;patchDay(k,{prayers:{[p]:toggleIn(((dayDoc(k).prayers||{})[p]||[]).slice(),id)}});break;}
@@ -406,6 +447,7 @@ document.addEventListener("click",e=>{
     case "cleanBy":S.cleanBy=S.cleanBy===id?null:id;try{localStorage.setItem("lm.me",S.cleanBy||"");}catch(_){}render();break;
     case "markClean":{if(!S.cleanBy)return;const s=JSON.parse(JSON.stringify(S.rooms[id]||{history:[]}));const at=new Date().toISOString();s.last=at;s.by=S.cleanBy;s.history=(s.history||[]).concat([{at,by:S.cleanBy}]).slice(-40);S.rooms[id]=s;save("roomstate/"+id,s);toast("Recorded: "+(cfg().rooms.find(r=>r.id===id)||{}).name+" cleaned");render();break;}
     case "undoClean":{const s=JSON.parse(JSON.stringify(S.rooms[id]||{history:[]}));s.history=(s.history||[]).slice(0,-1);const l=s.history[s.history.length-1];s.last=l?l.at:null;s.by=l?l.by:null;S.rooms[id]=s;save("roomstate/"+id,s);render();break;}
+    case "recWeek":S.recWeek=Number(t.dataset.o);render();break;
     case "wk":S.weekOffset+=Number(t.dataset.d);render();break;
     case "dutyToggle":{const wd=weekDoc(t.dataset.w);setWeekDuty(t.dataset.w,id,wd.done&&wd.done[id]?null:{at:new Date().toISOString()});break;}
     case "dutyDone":setWeekDuty(t.dataset.w,id,{at:new Date().toISOString()});toast("Vazife marked done");break;
@@ -435,7 +477,7 @@ document.addEventListener("input",e=>{
   else if(t.dataset.f==="hafta"){const m=weekStart(0);m.setDate(m.getDate()-7*(Number(t.value)-1));draft.rotaAnchor=dkey(m);}
   else if(t.dataset.f==="flname")draft.floors[i].name=t.value;
   else if(t.dataset.f==="rm"){const k=t.dataset.k;draft.rooms[i][k]=k==="name"?t.value:Number(t.value);if(k==="every")draft.rooms[i].every=Math.max(0,Number(t.value)||0);}
-  else if(t.dataset.f==="du"){if(t.dataset.k==="title")draft.duties[i].title=t.value;else{draft.duties[i].rotate=!t.value;draft.duties[i].fixed=t.value||null;}}
+  else if(t.dataset.f==="du"){if(t.dataset.k==="title")draft.duties[i].title=t.value;else if(t.dataset.k==="pts")draft.duties[i].pts=Math.max(0,Number(t.value)||0);else{draft.duties[i].rotate=!t.value;draft.duties[i].fixed=t.value||null;}}
 });
 let bookT;
 document.addEventListener("change",e=>{if(e.target.id==="book"){clearTimeout(bookT);const v=e.target.value;patchDay(today(),{reading:{book:v}});}});
@@ -454,6 +496,7 @@ function ingest(rows){
   if(config)S.config=config;S.days=days;S.rooms=rooms;S.weeks=weeks;S.notes=notes;
 }
 function typing(){const a=document.activeElement;return a&&(a.tagName==="INPUT"||a.tagName==="SELECT");}
+function why(err){let w="";try{const j=JSON.parse(err.message);w=j.message||j.hint||"";}catch(_){w=String(err.message||"");}return (err.status?("error "+err.status+" – "):"no connection – ")+w.slice(0,160);}
 let busy=false;
 async function refresh(){
   if(busy||!PASS)return;busy=true;
@@ -472,7 +515,7 @@ document.addEventListener("submit",async e=>{
   if(e.target.id!=="passForm")return;e.preventDefault();
   PASS=$("#passIn").value.trim();if(!PASS)return;
   try{const rows=await rpc("ledger_read");try{localStorage.setItem("lm.pass",PASS);}catch(_){}ingest(rows);render();}
-  catch(err){PASS=null;gate(err.wrongPass?"That passcode didn't work.":"Couldn't reach the server. Check the connection and try again.");}
+  catch(err){PASS=null;gate(err.wrongPass?"That passcode didn't work.":"Couldn't reach the server. Details: "+why(err));}
 });
 if(!CONF.supabaseUrl||!CONF.supabaseKey){
   $("#app").innerHTML='<section class="view"><div class="card"><h2>Not connected yet</h2><p class="sub" style="margin:0">Fill in config.js with the Supabase project URL and key, then reload.</p></div></section>';
