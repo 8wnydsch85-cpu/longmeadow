@@ -245,6 +245,10 @@ const pad=n=>String(n).padStart(2,"0");
 const dkey=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const today=()=>dkey(new Date());
 function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);return x;}
+// Cleaning weeks run from Monday 11 PM to the next Monday 11 PM (cleaning is usually done Sunday–Monday).
+function cleanStart(off){const m=monday(new Date(Date.now()-23*36e5));m.setDate(m.getDate()+7*(off||0));return m;}
+function cleanDue(m){const d=new Date(m);d.setDate(d.getDate()+7);d.setHours(23,0,0,0);return d;}
+function dueText(d){const h=(d-Date.now())/36e5;if(h<=0)return "Overdue";if(h<24)return "Due tonight, 11 PM";if(h<48)return "Due tomorrow, 11 PM";return "Due "+d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})+", 11 PM";}
 function weekStart(off){const m=monday(new Date());m.setDate(m.getDate()+7*(off||0));return m;}
 const EPOCH=new Date(2024,0,1); // a Monday
 const weekIndex=m=>Math.round((m-EPOCH)/(7*864e5));
@@ -291,6 +295,9 @@ function dutyAssignee(duty,idx,monDate){
   return R[((idx+hafta(monDate)-1)%R.length+R.length)%R.length].id;
 }
 function weekKey(m){return dkey(m);}
+// A duty with "alternate" switches between two jobs week by week; the order flips each cycle so everyone gets both.
+function altIndex(m){const a=cfg().rotaAnchor?parseKey(cfg().rotaAnchor):EPOCH;const w=weekIndex(m)-weekIndex(a);const n=cycleLen();const cyc=Math.floor(w/n);return (((hafta(m)-1+cyc)%2)+2)%2;}
+function dutyTitle(du,m){return du.alternate&&du.alternate.length===2?du.alternate[altIndex(m)]:du.title;}
 function weekDoc(k){return S.weeks[k]||{start:k,done:{}};}
 const held=x=>!!(x&&x.reading&&(x.reading.done||x.reading.istisare));
 function readingStreak(){
@@ -324,13 +331,13 @@ function chips(ids,selected,action,extra){
 // Duties from past weeks (since the rota started) that were never ticked off.
 function overdueCleanings(){
   const D=cfg().duties;if(!D.length)return 0;
-  const start=cfg().rotaAnchor||weekKey(weekStart(0));let n=0;
-  for(let o=-1;o>=-12;o--){const m=weekStart(o);if(weekKey(m)<start)break;const wd=weekDoc(weekKey(m));
+  const start=cfg().rotaAnchor||weekKey(cleanStart(0));let n=0;
+  for(let o=-1;o>=-12;o--){const m=cleanStart(o);if(weekKey(m)<start)break;const wd=weekDoc(weekKey(m));
     D.forEach(du=>{if(!(wd.done&&wd.done[du.id]))n++;});}
   return n;
 }
 function statsHTML(){
-  const m=weekStart(0),wk=weekKey(m),wd=weekDoc(wk);
+  const m=weekStart(0),cm=cleanStart(0),wd=weekDoc(weekKey(cm));
   const duties=cfg().duties;const done=duties.filter(d=>wd.done&&wd.done[d.id]).length;
   const days=weekDays(m).filter(k=>k<=today());
   const cem=days.reduce((a,k)=>a+cemaatCount(k),0);
@@ -400,19 +407,19 @@ function rotaCard(m){
   const short=t=>esc(String(t).split(" / ")[0]);
   let rows="";
   for(let h=1;h<=n;h++){const wm=new Date(first);wm.setDate(wm.getDate()+7*(h-1));
-    rows+=`<tr class="${h===cur?"cur":""}"><td><b>Hafta ${h}</b></td>${D.map((du,i)=>`<td>${esc(resName(dutyAssignee(du,i,wm)))}</td>`).join("")}</tr>`;}
+    rows+=`<tr class="${h===cur?"cur":""}"><td><b>Hafta ${h}</b></td>${D.map((du,i)=>`<td>${esc(resName(dutyAssignee(du,i,wm)))}${du.alternate?`<div class="m" style="font-size:11px;opacity:.7">${esc((t=>t.includes(" + ")?t.split(" + ").pop():t.split(" ")[0])(String(dutyTitle(du,wm))))}</div>`:""}</td>`).join("")}</tr>`;}
   return `<div class="card"><div class="row spread"><h3>Full rota</h3><span class="sub" style="margin:0">Highlighted: the week shown above</span></div>
     <div class="scroll"><table class="rota"><thead><tr><th></th>${D.map(du=>`<th title="${esc(du.title)}">${short(du.title)}${du.pts?` <span class="ptag">${du.pts}</span>`:""}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function viewVazife(){
-  const m=weekStart(S.weekOffset),wk=weekKey(m),wd=weekDoc(wk),end=new Date(m);end.setDate(end.getDate()+6);
+  const m=cleanStart(S.weekOffset),wk=weekKey(m),wd=weekDoc(wk),due=cleanDue(m);
   const f=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
   const rows=cfg().duties.map((du,i)=>({du,who:dutyAssignee(du,i,m),done:wd.done&&wd.done[du.id]}));
   const per=cfg().residents.map(r=>{const mine=rows.filter(x=>x.who===r.id);return {r,total:mine.length,done:mine.filter(x=>x.done).length};});
   return `<section class="view">
-    <div class="row spread"><div><h2>Cleaning</h2><p class="sub">Duties change every Monday. The rota repeats every ${cycleLen()} weeks.</p></div>
-      <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · ${f(m)} – ${f(end)}${S.weekOffset===0?" · now":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
-    <div class="card"><h3>Duties</h3><div class="list">${rows.length?rows.map(({du,who,done})=>`<div class="item"><button class="box ${done?"on":""}" data-a="dutyToggle" data-id="${du.id}" data-w="${wk}" aria-label="Toggle done"></button><div class="grow"><div class="t">${esc(du.title)}</div><div class="m">${esc(who?resName(who):"Unassigned")}${du.pts?" · "+du.pts+" puan":""}${done?" · done "+ago(done.at):""}</div></div><span class="pill ${done?"on":S.weekOffset<0?"warn":""}">${done?"Done":S.weekOffset<0?"Missed":"Pending"}</span></div>`).join(""):'<div class="empty">No duties yet. Add them under Setup.</div>'}</div></div>
+    <div class="row spread"><div><h2>Cleaning</h2><p class="sub">Each week’s cleaning is due Monday at 11 PM, when the next hafta begins. The rota repeats every ${cycleLen()} weeks.</p></div>
+      <div class="weeknav"><button class="btn ghost sm" data-a="wk" data-d="-1" aria-label="Previous week">‹</button><span class="lbl"><b style="color:var(--text);font-weight:500">Hafta ${hafta(m)}</b> · due ${due.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}${S.weekOffset===0?" · now":""}</span><button class="btn ghost sm" data-a="wk" data-d="1" aria-label="Next week">›</button></div></div>
+    <div class="card"><div class="row spread"><h3>Duties</h3>${S.weekOffset===0?`<span class="pill warn">${esc(dueText(due))}</span>`:""}</div><div class="list">${rows.length?rows.map(({du,who,done})=>`<div class="item"><button class="box ${done?"on":""}" data-a="dutyToggle" data-id="${du.id}" data-w="${wk}" aria-label="Toggle done"></button><div class="grow"><div class="t">${esc(dutyTitle(du,m))}</div><div class="m">${du.alternate?`<span style="color:var(--dim)">${esc(du.title)} · </span>`:""}${esc(who?resName(who):"Unassigned")}${du.pts?" · "+du.pts+" puan":""}${done?" · done "+ago(done.at):""}</div></div><span class="pill ${done?"on":S.weekOffset<0?"warn":""}">${done?"Done":S.weekOffset<0?"Missed":S.weekOffset===0?"Pending":"Upcoming"}</span></div>`).join(""):'<div class="empty">No duties yet. Add them under Setup.</div>'}</div></div>
     ${rotaCard(m)}
     <div class="card"><h3>Who has done theirs</h3><div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Done</th><th>Progress</th><th class="num">Left</th></tr></thead><tbody>${per.map(p=>`<tr><td>${esc(p.r.name)}</td><td class="num">${p.done}/${p.total}</td><td style="width:40%"><div class="bar"><i style="width:${p.total?Math.round(p.done/p.total*100):0}%"></i></div></td><td class="num">${p.total-p.done}</td></tr>`).join("")}</tbody></table></div></div>
   </section>`;
@@ -476,7 +483,7 @@ function viewSetup(){
 
 function render(){
   renderTabs();
-  $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+(cfg().duties.length?`<br><span class="hchip">Hafta ${hafta(weekStart(0))}</span>`:"");
+  $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+(cfg().duties.length?`<br><span class="hchip">Hafta ${hafta(cleanStart(0))}</span>`:"");
   const app=$("#app");
   const v={today:viewToday,istisare:viewIstisare,vazife:viewVazife,records:viewRecords,setup:viewSetup}[S.tab]||viewToday;
   const focusId=document.activeElement&&document.activeElement.id;
