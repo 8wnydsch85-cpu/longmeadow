@@ -117,7 +117,7 @@ table.rota tr.cur td:first-child{border-radius:6px 0 0 6px}table.rota tr.cur td:
 .x{background:none;border:1px solid var(--line2);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;align-self:flex-end}
 .x:hover{color:var(--text);border-color:var(--muted)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(10,10,11,.92);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
-nav.tabs .in{max-width:880px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+nav.tabs .in{max-width:880px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:2px}
 nav.tabs button{background:none;border:0;color:var(--dim);font:600 12px var(--sans);padding:8px 2px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
 nav.tabs button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6}
 nav.tabs button[aria-current="page"]{color:var(--white)}
@@ -179,6 +179,41 @@ textarea:focus,input:focus,select:focus{border-color:var(--muted);outline:none}
 .chip.static{cursor:default;font-size:12px;padding:3px 9px}
 .chip.static:hover{color:var(--muted);border-color:var(--line2)}
 .done-t{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--dim)}
+/* payments */
+.money{display:inline-flex;align-items:center;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding-left:11px;transition:border-color .18s var(--ease)}
+.money>span{font:500 14px var(--mono);color:var(--muted)}
+.money input[type=number]{border:0;background:transparent;width:120px;font:500 15px var(--mono);padding:8px 10px 8px 4px}
+.money input[type=number]:focus{outline:none}
+.money:focus-within{border-color:var(--white)}
+.stat .n.cash{font-size:30px}
+.item.pay{cursor:pointer;margin:0 -10px;padding:12px 10px;border-radius:8px;transition:background-color .18s var(--ease)}
+.item.pay:hover{background:var(--panel2)}
+.item.pay.sel{background:var(--panel2);border-radius:8px 8px 0 0}
+.item.pay+.item.pay,.settle+.item.pay{border-top:1px solid var(--line)}
+.item.pay:first-child{border-top:0}
+.item.pay .dot{align-self:flex-start;margin-top:6px}
+.amt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.amt b{font:500 15px var(--mono);font-variant-numeric:tabular-nums;color:var(--text)}
+.pbar{height:3px;margin-top:8px;max-width:240px}
+.pbar i{transform-origin:left;animation:grow .5s var(--ease) both}
+.settle{margin:0 -10px;padding:14px 10px 16px;background:var(--panel2);border-top:1px dashed var(--line2);border-radius:0 0 8px 8px;display:flex;flex-direction:column;gap:14px}
+.settle.fresh{animation:unfold .3s var(--ease) both;transform-origin:top}
+.settle.fresh>*{animation:rise .32s var(--ease) both}
+.settle.fresh>*:nth-child(2){animation-delay:.04s}.settle.fresh>*:nth-child(3){animation-delay:.08s}.settle.fresh>*:nth-child(n+4){animation-delay:.12s}
+@keyframes unfold{from{opacity:0;clip-path:inset(0 0 100% 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.meta div{background:var(--panel);padding:9px 11px;display:flex;flex-direction:column;gap:2px}
+.meta b{font:500 15px var(--mono);font-variant-numeric:tabular-nums;font-weight:500}
+.meta span{font-size:11.5px;color:var(--muted)}
+.log{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.log div{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.log b{font:500 12.5px var(--mono);color:var(--text)}
+.log>div{align-items:center;padding:2px 0}
+.log .lr{display:inline-flex;align-items:center;gap:10px}
+.x.xs{width:24px;height:24px;font-size:13px;border-radius:6px;align-self:center;line-height:1}
+.log>div{animation:rise .24s var(--ease) both}
+.formgrid{display:grid;grid-template-columns:auto auto;justify-content:start;gap:14px;align-items:end}
+@media (max-width:560px){.formgrid{grid-template-columns:1fr}.meta b{font-size:13.5px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 
@@ -235,7 +270,7 @@ const DEFAULT_CEMAAT=["sabah","aksam","yatsi"];
 const AP=()=>{const on=cfg().prayers||DEFAULT_CEMAAT;return PRAYERS.filter(([id])=>on.includes(id));};
 
 /* ---------- state ---------- */
-const S={recWeek:0,ist:{},istDraft:null,istConfirm:null,animate:true,config:null,days:{},rooms:{},weeks:{},notes:[],tab:"today",weekOffset:0,selRoom:null,floor:"all",live:false,cleanBy:null};
+const S={pay:{},payDraft:null,paySel:null,payConfirm:null,payFilter:"open",payFresh:false,recWeek:0,ist:{},istDraft:null,istConfirm:null,animate:true,config:null,days:{},rooms:{},weeks:{},notes:[],tab:"today",weekOffset:0,selRoom:null,floor:"all",live:false,cleanBy:null};
 try{S.tab=localStorage.getItem("lm.tab")||"today";if(S.tab==="house")S.tab="istisare";S.cleanBy=localStorage.getItem("lm.me")||null;}catch(e){}
 
 const cfg=()=>S.config||DEFAULT_CONFIG;
@@ -315,13 +350,14 @@ const ICONS={
   house:'<svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
   istisare:'<svg viewBox="0 0 24 24"><path d="M4 5h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M17 9h3a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3l-4-3h-3"/></svg>',
   vazife:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="m8 11 2.5 2.5L16 8M8 17h8"/></svg>',
+  payments:'<svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="2"/><path d="M2.5 10h19M6.5 14.5h4"/></svg>',
   records:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   setup:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
-const TABS=[["today","Today"],["istisare","İstişare"],["vazife","Cleaning"],["records","Records"],["setup","Setup"]];
+const TABS=[["today","Today"],["istisare","İstişare"],["vazife","Cleaning"],["payments","Payments"],["records","Records"],["setup","Setup"]];
 function renderTabs(){
   const el=$("#tabs");
-  if(el.dataset.v!=="2"||!el.children.length){el.innerHTML=TABS.map(([id,l])=>`<button data-tab="${id}">${ICONS[id]}<span>${l}</span></button>`).join("");el.dataset.v="2";}
+  if(el.dataset.v!=="3"||!el.children.length){el.innerHTML=TABS.map(([id,l])=>`<button data-tab="${id}">${ICONS[id]}<span>${l}</span></button>`).join("");el.dataset.v="3";}
   el.querySelectorAll("button").forEach(b=>{if(b.dataset.tab===S.tab)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
 }
 function chips(ids,selected,action,extra){
@@ -459,6 +495,83 @@ function viewRecords(){
   </section>`;
 }
 
+/* ---------- payments ---------- */
+const money=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString("en-US",{style:"currency",currency:"USD"});
+const cents=v=>Math.round((Number(v)||0)*100)/100;
+const payAmt=p=>cents(p.amount);
+const payPaid=p=>Math.min(payAmt(p),Math.max(0,cents(p.paid)));
+const payLeft=p=>cents(payAmt(p)-payPaid(p));
+function payStatus(p){const pd=payPaid(p);return pd<=0?"unpaid":payLeft(p)<=0?"paid":"partial";}
+const PAY_LABEL={unpaid:"Unpaid",partial:"Part paid",paid:"Paid"};
+function payList(){return Object.values(S.pay||{}).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.at).localeCompare(String(a.at)));}
+function viewPayments(){
+  const all=payList(),dr=S.payDraft,mk=today().slice(0,7);
+  const outstanding=cents(all.reduce((a,p)=>a+payLeft(p),0));
+  const open=all.filter(p=>payStatus(p)!=="paid");
+  const spentMonth=cents(all.filter(p=>String(p.date).slice(0,7)===mk).reduce((a,p)=>a+payAmt(p),0));
+  const paidMonth=cents(all.reduce((a,p)=>a+(p.log||[]).filter(l=>String(l.at).slice(0,7)===dkey(new Date()).slice(0,7)).reduce((x,l)=>x+(Number(l.amt)||0),0),0));
+  const shown=S.payFilter==="open"?open:S.payFilter==="paid"?all.filter(p=>payStatus(p)==="paid"):all;
+  const per=cfg().residents.map(r=>{const mine=all.filter(p=>p.by===r.id);const tot=cents(mine.reduce((a,p)=>a+payAmt(p),0)),pd=cents(mine.reduce((a,p)=>a+payPaid(p),0));return {r,tot,pd,left:cents(tot-pd)};}).filter(x=>x.tot>0).sort((a,b)=>b.left-a.left);
+  const seg=[["open","Open"],["paid","Paid"],["all","All"]];
+  return `<section class="view">
+    <div class="row spread"><div><h2>Payments</h2><p class="sub">Groceries and supplies residents bought for the house, and what the house still owes them.</p></div>${dr?"":'<button class="btn" data-a="payNew">Add expense</button>'}</div>
+    ${dr?payForm(dr):""}
+    <div class="stats">
+      <div class="stat"><span class="n cash" data-money="${outstanding}">${money(outstanding)}</span><span class="l">House owes</span></div>
+      <div class="stat"><span class="n">${open.length}</span><span class="l">Open expense${open.length===1?"":"s"}</span></div>
+      <div class="stat"><span class="n cash" data-money="${spentMonth}">${money(spentMonth)}</span><span class="l">Spent this month</span></div>
+      <div class="stat"><span class="n cash" data-money="${paidMonth}">${money(paidMonth)}</span><span class="l">Paid back this month</span></div>
+    </div>
+    <div class="card"><div class="row spread"><h3>Expenses</h3><div class="seg" role="group" aria-label="Filter">${seg.map(([id,l])=>`<button data-a="payFilter" data-id="${id}" aria-pressed="${S.payFilter===id}">${l}</button>`).join("")}</div></div>
+      <div class="legend"><span><i class="dot overdue"></i>Unpaid</span><span><i class="dot due"></i>Part paid</span><span><i class="dot clean"></i>Paid</span></div>
+      <div class="list">${shown.length?shown.map(payItem).join(""):`<div class="empty">${S.payFilter==="open"?(all.length?"Everyone has been paid back.":"No expenses yet. Tap “Add expense” after a grocery run."):S.payFilter==="paid"?"Nothing paid back yet.":"No expenses yet."}</div>`}</div></div>
+    <div class="card"><h3>Owed by person</h3>${per.length?`<div class="scroll"><table><thead><tr><th>Resident</th><th class="num">Spent</th><th>Paid back</th><th class="num">Owed</th></tr></thead><tbody>${per.map(x=>`<tr><td>${esc(x.r.name)}</td><td class="num">${money(x.tot)}</td><td style="width:34%"><div class="bar"><i style="width:${x.tot?Math.round(x.pd/x.tot*100):0}%"></i></div></td><td class="num">${x.left>0?`<b style="font-weight:500;color:var(--white)">${money(x.left)}</b>`:`<span style="color:var(--dim)">${money(0)}</span>`}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">Nothing recorded yet.</div>'}</div>
+  </section>`;
+}
+function payItem(p){
+  const st=payStatus(p),sel=S.paySel===p.id,pd=payPaid(p),amt=payAmt(p);
+  return `<div class="item pay ${sel?"sel":""}" data-a="paySel" data-id="${p.id}" role="button" tabindex="0" aria-expanded="${sel}">
+    <span class="dot ${st==="paid"?"clean":st==="partial"?"due":"overdue"}"></span>
+    <div class="grow"><div class="t ${st==="paid"?"done-t":""}">${esc(p.item)}</div><div class="m">${esc(resName(p.by))} · ${esc(fmtDay(p.date))}${st==="partial"?" · "+money(pd)+" of "+money(amt)+" paid":""}</div>${st==="partial"?`<div class="bar pbar"><i style="width:${Math.round(pd/amt*100)}%"></i></div>`:""}</div>
+    <div class="amt"><b>${money(st==="paid"?amt:payLeft(p))}</b><span class="pill ${st==="unpaid"?"warn":st==="paid"?"on":""}">${PAY_LABEL[st]}</span></div>
+  </div>${sel?settleHTML(p):""}`;
+}
+function settleHTML(p){
+  const pd=payPaid(p),amt=payAmt(p),left=payLeft(p),conf=S.payConfirm===p.id,log=(p.log||[]).slice().reverse();
+  const fresh=S.payFresh;S.payFresh=false;
+  return `<div class="settle ${fresh?"fresh":""}">
+    <div class="meta"><div><b>${money(amt)}</b><span>Spent</span></div><div><b>${money(pd)}</b><span>Paid back</span></div><div><b style="color:var(--white)">${money(left)}</b><span>Still owed</span></div></div>
+    <div class="field"><span>Paid back to ${esc(resName(p.by))}</span>
+      <div class="row">${left>0?`<button class="btn" data-a="payFull" data-id="${p.id}">Mark paid in full</button>`:""}<span class="money"><span>$</span><input type="number" id="payAmt-${p.id}" min="0" max="${amt}" step="0.01" inputmode="decimal" value="${pd?pd.toFixed(2):""}" placeholder="0.00" aria-label="Amount paid back so far"></span><button class="btn ghost" data-a="payPart" data-id="${p.id}">Save amount</button></div>
+      <div class="sub" style="margin:0">Enter the total paid back so far. A partial amount leaves the rest open.</div></div>
+    ${log.length?`<div class="log">${log.slice(0,8).map((l,j)=>`<div><span>${new Date(l.at).toLocaleString("en-GB",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</span><span class="lr"><b>${l.amt<0?"−":"+"}${money(Math.abs(l.amt))}</b><button class="x xs" data-a="payLogRm" data-id="${p.id}" data-i="${log.length-1-j}" aria-label="Remove this payment entry">×</button></span></div>`).join("")}</div>`:""}
+    <div class="row spread">
+      <div class="row">${pd>0?`<button class="btn ghost sm" data-a="payReset" data-id="${p.id}">Mark unpaid</button>`:""}<button class="btn ghost sm" data-a="payEdit" data-id="${p.id}">Edit</button></div>
+      <div class="row">${conf?`<span class="sub" style="margin:0">Delete this expense?</span><button class="btn sm" data-a="payDel" data-id="${p.id}">Delete</button><button class="btn ghost sm" data-a="payDelNo">Keep</button>`:`<button class="x" style="width:30px;height:30px" data-a="payDelAsk" data-id="${p.id}" aria-label="Delete expense">×</button>`}</div>
+    </div>
+  </div>`;
+}
+function payForm(dr){
+  return `<div class="card sheet">
+    <h3>${dr.id?"Edit expense":"New expense"}</h3>
+    <div class="field"><span>Who paid</span>${chips(null,dr.by?[dr.by]:[],"payBy")}</div>
+    <label class="field"><span>What was bought</span><input type="text" id="payItem" data-f="pay" data-k="item" value="${esc(dr.item)}" placeholder="e.g. Groceries for the week: chicken, rice, onions" autocomplete="off"></label>
+    <div class="formgrid">
+      <label class="field"><span>Amount the house owes</span><span class="money"><span>$</span><input type="number" id="payAmount" data-f="pay" data-k="amount" min="0" step="0.01" inputmode="decimal" value="${esc(dr.amount)}" placeholder="0.00"></span></label>
+      <label class="field"><span>Date</span><input type="date" id="payDate" data-f="pay" data-k="date" value="${esc(dr.date)}"></label>
+    </div>
+    <div class="row"><button class="btn" data-a="paySave">Save expense</button><button class="btn ghost" data-a="payCancel">Cancel</button></div>
+  </div>`;
+}
+function setPaid(id,val){
+  const p=S.pay[id];if(!p)return;const c=JSON.parse(JSON.stringify(p));delete c.id;
+  const amt=payAmt(c),old=payPaid(c),nv=Math.min(amt,Math.max(0,cents(val))),d=cents(nv-old);
+  if(!d){toast("No change");return;}
+  const at=new Date().toISOString();c.paid=nv;c.log=(c.log||[]).concat([{at,amt:d}]).slice(-30);c.paidAt=nv>=amt?at:null;
+  S.pay[id]=Object.assign({id},c);save("payments/"+id,c);render();
+  toast(nv>=amt?"Paid in full: "+money(amt)+" to "+resName(c.by):nv<=0?"Marked unpaid":"Recorded: "+money(nv)+" of "+money(amt)+" paid");
+}
+
 let draft=null;
 function draftHafta(){const a=draft.rotaAnchor?parseKey(draft.rotaAnchor):EPOCH;const n=Math.max(1,draft.residents.length);const w=weekIndex(weekStart(0))-weekIndex(a);return ((w%n)+n)%n+1;}
 function chipsP(){const on=draft.prayers||DEFAULT_CEMAAT;return `<div class="chips">${PRAYERS.map(([id,n])=>`<button class="chip" data-a="togPrayer" data-id="${id}" aria-pressed="${on.includes(id)}">${n}</button>`).join("")}</div>`;}
@@ -485,7 +598,7 @@ function render(){
   renderTabs();
   $("#todayDate").innerHTML=new Date().toLocaleDateString("en-GB",{weekday:"long"})+"<br>"+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})+(cfg().duties.length?`<br><span class="hchip">Hafta ${hafta(cleanStart(0))}</span>`:"");
   const app=$("#app");
-  const v={today:viewToday,istisare:viewIstisare,vazife:viewVazife,records:viewRecords,setup:viewSetup}[S.tab]||viewToday;
+  const v={today:viewToday,istisare:viewIstisare,vazife:viewVazife,payments:viewPayments,records:viewRecords,setup:viewSetup}[S.tab]||viewToday;
   const focusId=document.activeElement&&document.activeElement.id;
   const html=v();
   // Skip identical re-renders (e.g. the save echoing back) so running animations aren't cut off.
@@ -499,9 +612,11 @@ function render(){
 let popSel=null,lastHtml="";
 function countUp(root){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-  root.querySelectorAll(".stat .n").forEach(n=>{const tn=n.firstChild;if(!tn||tn.nodeType!==3)return;const to=parseInt(tn.nodeValue,10);if(!(to>0))return;
+  root.querySelectorAll(".stat .n:not([data-money])").forEach(n=>{const tn=n.firstChild;if(!tn||tn.nodeType!==3)return;const to=parseInt(tn.nodeValue,10);if(!(to>0))return;
     const t0=performance.now();tn.nodeValue="0";
     const step=t=>{const p=Math.min(1,(t-t0)/500);tn.nodeValue=String(Math.round(to*(1-Math.pow(1-p,2))));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
+  root.querySelectorAll("[data-money]").forEach(n=>{const to=Number(n.dataset.money);if(!(to>0))return;const t0=performance.now();n.textContent=money(0);
+    const step=t=>{const p=Math.min(1,(t-t0)/600);n.textContent=money(to*(1-Math.pow(1-p,2)));if(p<1)requestAnimationFrame(step);};requestAnimationFrame(step);});
 }
 function fmtLong(k){const d=parseKey(k);return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});}
 function istList(){return Object.values(S.ist||{}).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.at).localeCompare(String(a.at)));}
@@ -553,6 +668,26 @@ document.addEventListener("click",e=>{
   const a=t.dataset.a,id=t.dataset.id,k=today();
   popSel=["a","id","p","w","d"].filter(x=>t.dataset[x]!=null).map(x=>`[data-${x}="${CSS.escape(t.dataset[x])}"]`).join("");
   switch(a){
+    case "payNew":S.payDraft={by:S.cleanBy&&cfg().residents.some(r=>r.id===S.cleanBy)?S.cleanBy:"",item:"",amount:"",date:today()};S.paySel=null;S.animate=true;render();window.scrollTo({top:0,behavior:"smooth"});setTimeout(()=>{const el=document.getElementById("payItem");if(el&&S.payDraft.by)el.focus();},380);break;
+    case "payEdit":{const p=S.pay[id];if(!p)return;S.payDraft={id,by:p.by,item:p.item,amount:String(payAmt(p)),date:p.date};S.animate=true;render();window.scrollTo({top:0,behavior:"smooth"});break;}
+    case "payCancel":S.payDraft=null;render();break;
+    case "payBy":S.payDraft.by=S.payDraft.by===id?"":id;if(S.payDraft.by){S.cleanBy=id;try{localStorage.setItem("lm.me",id);}catch(_){}}render();break;
+    case "paySave":{const dr=S.payDraft,amt=cents(dr.amount),item=(dr.item||"").trim();
+      if(!dr.by){toast("Choose who paid");return;}if(!item){toast("Say what was bought");return;}if(!(amt>0)){toast("Enter the amount owed");return;}if(!dr.date){toast("Choose a date");return;}
+      const prev=dr.id?S.pay[dr.id]:null;const doc={by:dr.by,item,amount:amt,paid:prev?Math.min(amt,payPaid(prev)):0,date:dr.date,at:prev&&prev.at||new Date().toISOString(),log:prev&&prev.log||[]};
+      doc.paidAt=doc.paid>=amt?(prev&&prev.paidAt||new Date().toISOString()):null;
+      const nid=dr.id||uid("p");S.pay[nid]=Object.assign({id:nid},doc);save("payments/"+nid,doc);S.payDraft=null;S.paySel=null;if(!dr.id&&S.payFilter==="paid")S.payFilter="open";S.animate=true;render();toast(dr.id?"Expense updated":"Expense added: "+money(amt)+" owed to "+resName(dr.by));break;}
+    case "paySel":S.paySel=S.paySel===id?null:id;S.payConfirm=null;S.payFresh=!!S.paySel;render();break;
+    case "payFilter":if(S.payFilter!==id){S.payFilter=id;S.paySel=null;S.animate=true;render();}break;
+    case "payFull":{const p=S.pay[id];if(p)setPaid(id,payAmt(p));break;}
+    case "payPart":{const el=document.getElementById("payAmt-"+id);const v=el?el.value.trim():"";if(v===""||isNaN(Number(v))){toast("Enter the amount paid back");return;}const p=S.pay[id];if(p&&Number(v)>payAmt(p)){toast("That is more than was spent");return;}setPaid(id,v);break;}
+    case "payReset":setPaid(id,0);break;
+    case "payLogRm":{const p=S.pay[id];if(!p)return;const c=JSON.parse(JSON.stringify(p));delete c.id;const i=Number(t.dataset.i);const l=(c.log||[])[i];if(!l)return;
+      c.log.splice(i,1);const amt=payAmt(c);c.paid=Math.min(amt,Math.max(0,cents(payPaid(c)-(Number(l.amt)||0))));c.paidAt=c.paid>=amt?(c.paidAt||new Date().toISOString()):null;
+      S.pay[id]=Object.assign({id},c);save("payments/"+id,c);render();toast("Payment entry removed: "+money(Math.abs(l.amt)));break;}
+    case "payDelAsk":S.payConfirm=id;render();break;
+    case "payDelNo":S.payConfirm=null;render();break;
+    case "payDel":delete S.pay[id];S.payConfirm=null;S.paySel=null;del("payments/"+id);render();toast("Expense deleted");break;
     case "istNew":S.istDraft={date:today(),attendees:cfg().residents.map(r=>r.id),notes:"",decisions:[{id:uid("d"),text:"",owner:"",done:false}]};S.animate=true;render();window.scrollTo({top:0,behavior:"smooth"});break;
     case "istEdit":{const m=S.ist[id];if(!m)return;const c=JSON.parse(JSON.stringify(m));S.istDraft={id,date:c.date,attendees:c.attendees||[],notes:c.notes||"",decisions:c.decisions||[],at:c.at};S.animate=true;render();window.scrollTo({top:0,behavior:"smooth"});break;}
     case "istCancel":S.istDraft=null;render();break;
@@ -602,7 +737,8 @@ document.addEventListener("click",e=>{
   }
 });
 document.addEventListener("input",e=>{
-  const ti=e.target;if(S.istDraft&&ti.dataset.f==="ist"){S.istDraft[ti.dataset.k]=ti.value;return;}
+  const ti=e.target;if(S.payDraft&&ti.dataset.f==="pay"){S.payDraft[ti.dataset.k]=ti.value;return;}
+  if(S.istDraft&&ti.dataset.f==="ist"){S.istDraft[ti.dataset.k]=ti.value;return;}
   if(S.istDraft&&ti.dataset.f==="dec"){S.istDraft.decisions[Number(ti.dataset.i)][ti.dataset.k]=ti.value;return;}
 });
 document.addEventListener("input",e=>{
@@ -614,6 +750,14 @@ document.addEventListener("input",e=>{
   else if(t.dataset.f==="rm"){const k=t.dataset.k;draft.rooms[i][k]=k==="name"?t.value:Number(t.value);if(k==="every")draft.rooms[i].every=Math.max(0,Number(t.value)||0);}
   else if(t.dataset.f==="du"){if(t.dataset.k==="title")draft.duties[i].title=t.value;else if(t.dataset.k==="pts")draft.duties[i].pts=Math.max(0,Number(t.value)||0);else{draft.duties[i].rotate=!t.value;draft.duties[i].fixed=t.value||null;}}
 });
+document.addEventListener("keydown",e=>{
+  const t=e.target;if(!(t&&t.getAttribute&&t.getAttribute("role")==="button"&&t.dataset.a))return;
+  if(e.key==="Enter"||e.key===" "){e.preventDefault();t.click();}
+});
+document.addEventListener("keydown",e=>{const t=e.target;if(e.key!=="Enter"||!t||!t.id)return;
+  if(t.id.startsWith("payAmt-")){e.preventDefault();const b=document.querySelector(`[data-a="payPart"][data-id="${CSS.escape(t.id.slice(7))}"]`);if(b)b.click();}
+  else if(t.dataset.f==="pay"){e.preventDefault();const b=document.querySelector('[data-a="paySave"]');if(b)b.click();}
+});
 let bookT;
 document.addEventListener("change",e=>{if(e.target.id==="book"){clearTimeout(bookT);const v=e.target.value;patchDay(today(),{reading:{book:v}});}});
 document.addEventListener("submit",e=>{
@@ -624,18 +768,44 @@ document.addEventListener("submit",e=>{
 
 /* ---------- boot ---------- */
 function ingest(rows){
-  const days={},rooms={},weeks={},notes=[],ist={};let config=null;
+  const days={},rooms={},weeks={},notes=[],ist={},pay={};let config=null;
   (rows||[]).forEach(x=>{const [c,id]=x.path.split("/");const d=x.data||{};
-    if(x.path==="house/config")config=d;else if(c==="days")days[id]=d;else if(c==="roomstate")rooms[id]=d;else if(c==="weeks")weeks[id]=d;else if(c==="notes")notes.push(Object.assign({id},d));else if(c==="istisare")ist[id]=Object.assign({id},d);});
+    if(x.path==="house/config")config=d;else if(c==="days")days[id]=d;else if(c==="roomstate")rooms[id]=d;else if(c==="weeks")weeks[id]=d;else if(c==="notes")notes.push(Object.assign({id},d));else if(c==="istisare")ist[id]=Object.assign({id},d);else if(c==="payments")pay[id]=Object.assign({id},d);});
   notes.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
-  if(config)S.config=config;S.days=days;S.rooms=rooms;S.weeks=weeks;S.notes=notes;S.ist=ist;
+  if(config)S.config=config;S.days=days;S.rooms=rooms;S.weeks=weeks;S.notes=notes;S.ist=ist;S.pay=pay;
+  migrateRota(!!config);
+}
+/* One-time update to the October 2026 cleaning split. Runs once, on the first phone that opens this version. */
+const ROTA_V="2026-10-05";
+function migrateRota(hadConfig){
+  const c=cfg();if(c.rotaVersion===ROTA_V)return;
+  const norm=s=>String(s||"").toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/[^a-z]/g,"");
+  const find=(...keys)=>{const r=c.residents.find(r=>keys.some(k=>norm(r.name).startsWith(k)));return r&&r.id;};
+  const Y=find("yusuf"),A=find("ali"),E=find("emre"),MC=find("mustafa"),AS=find("asim","ahmet"),MA=find("muhammed","muhammad");
+  if(![Y,A,E,MC,AS,MA].every(Boolean))return; // names don't match; leave the rota alone
+  const R=(a,x,k,y,z)=>({gA:a,gC:MA,gX:x,gY:y,gZ:z,gK:k});
+  const next=JSON.parse(JSON.stringify(c));
+  next.duties=[
+    {id:"gA",rotate:true,rooms:["usttuvalet","ustkat","merdiven"],title:"Üst Kat Tuvalet / Üst Kat / Merdivenler"},
+    {id:"gC",rotate:false,fixed:MA,rooms:["salon","tuvalet0"],title:"Büyük Salon / Tuvalet"},
+    {id:"gX",rotate:true,rooms:["tezgah"],title:"Mutfak Tezgâh Üzeri / Mutfak Yüzeyleri Silme"},
+    {id:"gZ",rotate:true,rooms:["buzdolabi"],title:"Buzdolabı / Raf"},
+    {id:"gY",rotate:true,rooms:["mutfakyer","ayakkabilik","laundry"],title:"Mutfak Yerleri / Ayakkabılık / Çamaşır Odası"},
+    {id:"gK",rotate:true,rooms:["kucuksalon","alttuvalet"],title:"Küçük Salon Yerleri / Kanepe Arkaları / Aşağı Tuvalet"}];
+  //        Üst Kat, Tezgâh, Küçük Salon, Mutfak Yerleri, Buzdolabı
+  next.rotaTable=[R(Y,A,MC,E,AS),R(A,Y,AS,MC,E),R(E,AS,MC,Y,A),R(Y,E,AS,A,MC),R(A,Y,MC,AS,E),R(E,MC,AS,A,Y)];
+  next.rotaAnchor="2026-09-28";next.rotaVersion=ROTA_V;
+  const have=new Set((next.rooms||[]).map(r=>r.id));
+  [["tezgah","Mutfak Tezgâhları"],["buzdolabi","Buzdolabı"],["salon","Büyük Salon"],["tuvalet0","Büyük Salon Tuvaleti"],["mutfakyer","Mutfak Yerleri"],["ayakkabilik","Ayakkabılık"],["kucuksalon","Küçük Salon"],["alttuvalet","Alt Kat Tuvalet"],["laundry","Laundry Room"],["ustkat","Üst Kat"],["usttuvalet","Üst Kat Tuvalet"],["merdiven","Merdivenler"]]
+    .forEach(([id,name])=>{if(!have.has(id))(next.rooms=next.rooms||[]).push({id,name,every:7,floor:/^ust/.test(id)?1:0});});
+  S.config=next;save("house/config",next);
 }
 function typing(){const a=document.activeElement;return a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName);}
 function why(err){let w="";try{const j=JSON.parse(err.message);w=j.message||j.hint||"";}catch(_){w=String(err.message||"");}return (err.status?("error "+err.status+" – "):"no connection – ")+w.slice(0,160);}
 let busy=false;
 async function refresh(){
   if(busy||!PASS)return;busy=true;
-  try{const rows=await rpc("ledger_read");ingest(rows);$("#banner").hidden=true;if(!typing()&&!draft&&!S.istDraft)render();}
+  try{const rows=await rpc("ledger_read");ingest(rows);$("#banner").hidden=true;if(!typing()&&!draft&&!S.istDraft&&!S.payDraft)render();}
   catch(e){if(e.wrongPass){PASS=null;try{localStorage.removeItem("lm.pass");}catch(_){}gate("That passcode didn't work.");}else{const b=$("#banner");b.hidden=false;b.textContent="Offline. Showing the last loaded records; changes will fail until the connection returns.";}}
   finally{busy=false;}
 }
