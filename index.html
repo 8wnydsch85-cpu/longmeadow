@@ -215,24 +215,24 @@ textarea:focus,input:focus,select:focus{border-color:var(--muted);outline:none}
 .formgrid{display:grid;grid-template-columns:auto auto;justify-content:start;gap:14px;align-items:end}
 @media (max-width:560px){.formgrid{grid-template-columns:1fr}.meta b{font-size:13.5px}}
 /* intro */
-#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;cursor:pointer;transition:opacity .55s var(--ease) .12s,visibility 0s linear .7s}
-#intro .in{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;transition:transform .45s var(--ease),opacity .4s var(--ease)}
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;cursor:pointer;transition:opacity .35s var(--ease),visibility 0s linear .38s}
+#intro .in{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;transition:transform .3s var(--ease),opacity .25s var(--ease)}
 #intro .logo{width:64px;height:64px;margin-bottom:6px;fill:none;stroke:var(--white);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
 #intro .logo path{stroke-dasharray:1;stroke-dashoffset:1;animation:introDraw .7s var(--ease) both}
-#intro .logo .l1{animation-delay:.05s;animation-duration:.6s}
-#intro .logo .l2{animation-delay:.45s;animation-duration:.3s}
-#intro .logo .l3{animation-delay:.3s;animation-duration:.7s}
-#intro .logo .l4{animation-delay:.75s;animation-duration:.45s}
-#intro .logo .l5{animation-delay:.9s;animation-duration:.4s;opacity:.45}
-#intro .logo{animation:introGlow 1.6s var(--ease) .2s both}
+#intro .logo .l1{animation-delay:0s;animation-duration:.5s}
+#intro .logo .l2{animation-delay:.3s;animation-duration:.25s}
+#intro .logo .l3{animation-delay:.1s;animation-duration:.55s}
+#intro .logo .l4{animation-delay:.35s;animation-duration:.3s}
+#intro .logo .l5{animation-delay:.45s;animation-duration:.25s;opacity:.45}
+#intro .logo{animation:introGlow .9s var(--ease) .1s both}
 @keyframes introDraw{to{stroke-dashoffset:0}}
 @keyframes introGlow{0%{filter:none}60%{filter:drop-shadow(0 0 6px rgba(255,255,255,.35))}100%{filter:none}}
-#intro .ie{font:500 11px var(--mono);text-transform:uppercase;color:var(--muted);animation:introTrack 1s var(--ease) .7s both}
+#intro .ie{font:500 11px var(--mono);text-transform:uppercase;color:var(--muted);animation:introTrack .55s var(--ease) .35s both}
 #intro .mask{overflow:hidden;padding:0 4px .08em}
-#intro .it{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(30px,9.4vw,64px);line-height:1.05;white-space:nowrap;letter-spacing:-.01em;color:var(--text);animation:introRise .9s cubic-bezier(.2,.7,.1,1) .9s both}
+#intro .it{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(30px,9.4vw,64px);line-height:1.05;white-space:nowrap;letter-spacing:-.01em;color:var(--text);animation:introRise .6s cubic-bezier(.2,.7,.1,1) .4s both}
 #intro .it i{color:var(--muted)}
-#intro .il{height:1px;width:140px;background:var(--white);transform-origin:center;animation:introLine .7s var(--ease) 1.45s both}
-#intro .id{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);animation:introFade .5s var(--ease) 1.65s both}
+#intro .il{height:1px;width:140px;background:var(--white);transform-origin:center;animation:introLine .3s var(--ease) .45s both}
+#intro .id{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);animation:introFade .25s var(--ease) .5s both}
 #intro.out{opacity:0;visibility:hidden;pointer-events:none}
 #intro.out .in{transform:translateY(-10px) scale(.985);opacity:0}
 @keyframes introTrack{from{opacity:0;letter-spacing:.42em}to{opacity:1;letter-spacing:.16em}}
@@ -257,14 +257,11 @@ body.intro-on{overflow:hidden}
   </svg>
   <div class="ie">Hizmet evi · Longmeadow, MA</div>
   <div class="mask"><span class="it">551 Longmeadow <i>St.</i></span></div>
-  <div class="il"></div>
-  <div class="id" id="introDate"></div>
 </div></div>
 <script>(function(){var el=document.getElementById("intro");try{
   if(sessionStorage.getItem("lm.intro")||matchMedia("(prefers-reduced-motion: reduce)").matches){el.remove();return;}
   sessionStorage.setItem("lm.intro","1");}catch(e){}
   document.body.classList.add("intro-on");
-  var d=new Date();document.getElementById("introDate").textContent=d.toLocaleDateString("en-GB",{weekday:"long"})+" · "+d.toLocaleDateString("en-GB",{day:"numeric",month:"long"});
 })();</script>
 <div class="wrap">
   <header class="top">
@@ -821,10 +818,10 @@ document.addEventListener("submit",e=>{
     const sec=$("#app").firstElementChild;
     if(sec){sec.classList.remove("anim");void sec.offsetWidth;sec.classList.add("anim");if(sec.querySelector(".stat"))countUp(sec);}
     const nav=$("nav.tabs");nav.classList.add("enter");setTimeout(()=>nav.classList.remove("enter"),600);
-    setTimeout(()=>el.remove(),800);
+    setTimeout(()=>el.remove(),420);
   }
   el.addEventListener("click",finish);
-  setTimeout(finish,2600);
+  setTimeout(finish,1150);
 })();
 
 /* ---------- boot ---------- */
