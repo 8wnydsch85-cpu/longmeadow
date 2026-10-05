@@ -214,11 +214,58 @@ textarea:focus,input:focus,select:focus{border-color:var(--muted);outline:none}
 .log>div{animation:rise .24s var(--ease) both}
 .formgrid{display:grid;grid-template-columns:auto auto;justify-content:start;gap:14px;align-items:end}
 @media (max-width:560px){.formgrid{grid-template-columns:1fr}.meta b{font-size:13.5px}}
+/* intro */
+#intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;cursor:pointer;transition:opacity .55s var(--ease) .12s,visibility 0s linear .7s}
+#intro .in{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;transition:transform .45s var(--ease),opacity .4s var(--ease)}
+#intro .logo{width:64px;height:64px;margin-bottom:6px;fill:none;stroke:var(--white);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+#intro .logo path{stroke-dasharray:1;stroke-dashoffset:1;animation:introDraw .7s var(--ease) both}
+#intro .logo .l1{animation-delay:.05s;animation-duration:.6s}
+#intro .logo .l2{animation-delay:.45s;animation-duration:.3s}
+#intro .logo .l3{animation-delay:.3s;animation-duration:.7s}
+#intro .logo .l4{animation-delay:.75s;animation-duration:.45s}
+#intro .logo .l5{animation-delay:.9s;animation-duration:.4s;opacity:.45}
+#intro .logo{animation:introGlow 1.6s var(--ease) .2s both}
+@keyframes introDraw{to{stroke-dashoffset:0}}
+@keyframes introGlow{0%{filter:none}60%{filter:drop-shadow(0 0 6px rgba(255,255,255,.35))}100%{filter:none}}
+#intro .ie{font:500 11px var(--mono);text-transform:uppercase;color:var(--muted);animation:introTrack 1s var(--ease) .7s both}
+#intro .mask{overflow:hidden;padding:0 4px .08em}
+#intro .it{display:block;font-family:var(--serif);font-weight:400;font-size:clamp(30px,9.4vw,64px);line-height:1.05;white-space:nowrap;letter-spacing:-.01em;color:var(--text);animation:introRise .9s cubic-bezier(.2,.7,.1,1) .9s both}
+#intro .it i{color:var(--muted)}
+#intro .il{height:1px;width:140px;background:var(--white);transform-origin:center;animation:introLine .7s var(--ease) 1.45s both}
+#intro .id{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);animation:introFade .5s var(--ease) 1.65s both}
+#intro.out{opacity:0;visibility:hidden;pointer-events:none}
+#intro.out .in{transform:translateY(-10px) scale(.985);opacity:0}
+@keyframes introTrack{from{opacity:0;letter-spacing:.42em}to{opacity:1;letter-spacing:.16em}}
+@keyframes introRise{from{transform:translateY(105%)}to{transform:none}}
+@keyframes introLine{from{transform:scaleX(0);opacity:.2}to{transform:scaleX(1);opacity:1}}
+@keyframes introFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes navIn{from{transform:translateY(100%)}to{transform:none}}
+nav.tabs.enter{animation:navIn .5s var(--ease) both}
+body.intro-on{overflow:hidden}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 
 </head>
 <body>
+<div id="intro" aria-hidden="true"><div class="in">
+  <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+    <path class="l1" pathLength="1" d="M5 22.5 24 7l19 15.5"/>
+    <path class="l2" pathLength="1" d="M33 14.6V9h4.5v9.3"/>
+    <path class="l3" pathLength="1" d="M10 19v22h28V19"/>
+    <path class="l4" pathLength="1" d="M20 41v-8a4 4 0 0 1 8 0v8"/>
+    <path class="l5" pathLength="1" d="M5 41h38"/>
+  </svg>
+  <div class="ie">Hizmet evi · Longmeadow, MA</div>
+  <div class="mask"><span class="it">551 Longmeadow <i>St.</i></span></div>
+  <div class="il"></div>
+  <div class="id" id="introDate"></div>
+</div></div>
+<script>(function(){var el=document.getElementById("intro");try{
+  if(sessionStorage.getItem("lm.intro")||matchMedia("(prefers-reduced-motion: reduce)").matches){el.remove();return;}
+  sessionStorage.setItem("lm.intro","1");}catch(e){}
+  document.body.classList.add("intro-on");
+  var d=new Date();document.getElementById("introDate").textContent=d.toLocaleDateString("en-GB",{weekday:"long"})+" · "+d.toLocaleDateString("en-GB",{day:"numeric",month:"long"});
+})();</script>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -765,6 +812,20 @@ document.addEventListener("submit",e=>{
   const v=$("#noteText").value.trim();if(!v)return;
   const n={id:uid("n"),text:v,at:new Date().toISOString(),done:false};S.notes.unshift(n);save("notes/"+n.id,{text:n.text,at:n.at,done:false});render();
 });
+
+/* ---------- intro ---------- */
+(function(){
+  const el=$("#intro");if(!el)return;let gone=false;
+  function finish(){
+    if(gone)return;gone=true;el.classList.add("out");document.body.classList.remove("intro-on");
+    const sec=$("#app").firstElementChild;
+    if(sec){sec.classList.remove("anim");void sec.offsetWidth;sec.classList.add("anim");if(sec.querySelector(".stat"))countUp(sec);}
+    const nav=$("nav.tabs");nav.classList.add("enter");setTimeout(()=>nav.classList.remove("enter"),600);
+    setTimeout(()=>el.remove(),800);
+  }
+  el.addEventListener("click",finish);
+  setTimeout(finish,2600);
+})();
 
 /* ---------- boot ---------- */
 function ingest(rows){
