@@ -214,6 +214,12 @@ textarea:focus,input:focus,select:focus{border-color:var(--muted);outline:none}
 .log>div{animation:rise .24s var(--ease) both}
 .formgrid{display:grid;grid-template-columns:auto auto;justify-content:start;gap:14px;align-items:end}
 @media (max-width:560px){.formgrid{grid-template-columns:1fr}.meta b{font-size:13.5px}}
+/* nöbet */
+.nobet .nm{font-family:var(--serif);font-size:24px;line-height:1}
+.nobet .nm.none{font-size:18px;color:var(--muted)}
+/* prayer times */
+.ptnext{font:500 11.5px var(--mono);color:var(--muted);letter-spacing:.02em;white-space:nowrap}
+.ptnext b{font-weight:500;color:var(--white)}
 /* intro */
 #intro{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;cursor:pointer;transition:opacity .35s var(--ease),visibility 0s linear .38s}
 #intro .in{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;transition:transform .3s var(--ease),opacity .25s var(--ease)}
@@ -318,6 +324,7 @@ const S={pay:{},payDraft:null,paySel:null,payConfirm:null,payFilter:"open",payFr
 try{S.tab=localStorage.getItem("lm.tab")||"today";if(S.tab==="house")S.tab="istisare";S.cleanBy=localStorage.getItem("lm.me")||null;}catch(e){}
 
 const cfg=()=>S.config||DEFAULT_CONFIG;
+
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
@@ -430,6 +437,50 @@ function statsHTML(){
   </div>`;
 }
 
+/* Prayer times for Longmeadow, MA: ISNA angles (Fajr 15°, Isha 15°), Hanafi Asr (shadow factor 2). */
+const PT_LAT=42.0501,PT_LNG=-72.5829;
+function prayerTimes(day){
+  const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
+  const y=day.getFullYear(),m=day.getMonth()+1,d=day.getDate();
+  const Y=m<=2?y-1:y,M=m<=2?m+12:m,A=Math.floor(Y/100),B=2-A+Math.floor(A/4);
+  const jd0=Math.floor(365.25*(Y+4716))+Math.floor(30.6001*(M+1))+d+B-1524.5-PT_LNG/(15*24);
+  function sun(t){const D=jd0+t-2451545,g=(357.529+.98560028*D)%360,q=(280.459+.98564736*D)%360,L=(q+1.915*Math.sin(rad(g))+.02*Math.sin(rad(2*g)))%360,e=23.439-.00000036*D;
+    const RA=deg(Math.atan2(Math.cos(rad(e))*Math.sin(rad(L)),Math.cos(rad(L))))/15,dec=deg(Math.asin(Math.sin(rad(e))*Math.sin(rad(L))));let eq=q/15-((RA%24)+24)%24;eq=((eq+12)%24+24)%24-12;return {dec,eq};}
+  const noon=t=>((12-sun(t/24).eq)%24+24)%24;
+  const angleT=(a,t,ccw)=>{const s=sun(t/24),n=noon(t);const v=deg(Math.acos((-Math.sin(rad(a))-Math.sin(rad(s.dec))*Math.sin(rad(PT_LAT)))/(Math.cos(rad(s.dec))*Math.cos(rad(PT_LAT)))))/15;return n+(ccw?-v:v);};
+  const asrT=(f,t)=>{const s=sun(t/24);return angleT(-deg(Math.atan(1/(f+Math.tan(rad(Math.abs(PT_LAT-s.dec)))))),t);};
+  let T={fajr:5,sunrise:6,dhuhr:12,asr:13,maghrib:18,isha:18};
+  for(let i=0;i<2;i++){T={fajr:angleT(15,T.fajr,1),sunrise:angleT(.833,T.sunrise,1),dhuhr:noon(T.dhuhr),asr:asrT(2,T.asr),maghrib:angleT(.833,T.maghrib),isha:angleT(15,T.isha)};}
+  const tz=-new Date(y,m-1,d,12).getTimezoneOffset()/60,adj=PT_LNG/15;
+  const out={};for(const k in T){const h=T[k]+tz-adj+(k==="dhuhr"?1/60:0);const dt=new Date(y,m-1,d,0,0,0);dt.setMinutes(Math.round(h*60));out[k]=dt;}
+  return out;
+}
+const PT_MAP={sabah:"fajr",ogle:"dhuhr",ikindi:"asr",aksam:"maghrib",yatsi:"isha"};
+const fmtTime=d=>d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+function nextPrayer(){
+  const now=Date.now(),t=prayerTimes(new Date());
+  for(const [id,n] of PRAYERS){const d=t[PT_MAP[id]];if(d>now)return {n,d};}
+  const tm=new Date();tm.setDate(tm.getDate()+1);return {n:"Sabah",d:prayerTimes(tm).fajr};
+}
+function untilText(){
+  const {n,d}=nextPrayer(),m=Math.max(1,Math.ceil((d-Date.now())/6e4)),h=Math.floor(m/60),r=m%60;
+  return `<b>${n}</b> in ${h?h+"h "+(r?r+"m":""):m+" min"}`;
+}
+function ptimesHTML(){return `<span class="ptnext" id="ptNext">${untilText()}</span>`;}
+setInterval(()=>{const el=document.getElementById("ptNext");if(el)el.innerHTML=untilText();},30000);
+/* Akşam yemeği nöbeti: fixed weekly turns (Sunday = 0). */
+const NOBET={0:"Yusuf",1:null,2:"Mustafa Can",3:"Muhammad Abi",4:"Ahmet Asim",5:"Ali",6:"Emre"};
+function nobetName(n){
+  if(!n)return null;
+  const norm=s=>String(s||"").toLocaleLowerCase("tr").replace(/ı/g,"i").replace(/[^a-z]/g,"");
+  const key=norm(n.replace(/^Ahmet /,"").replace(/^Muhammad/,"Muhammed"));
+  const r=cfg().residents.find(r=>norm(r.name).startsWith(key.slice(0,5))||key.startsWith(norm(r.name).slice(0,5)));
+  return r?r.name:n;
+}
+function nobetCard(){
+  const who=nobetName(NOBET[new Date().getDay()]);
+  return `<div class="card nobet"><div class="row spread"><h3>Nöbet</h3>${who?`<span class="nm">${esc(who)}</span>`:`<span class="nm none">No nöbetçi tonight</span>`}</div></div>`;
+}
 function viewToday(){
   const k=today(),d=dayDoc(k),rd=d.reading||{};
   const overdue=cfg().rooms.map(r=>({r,st:roomStatus(r)})).filter(x=>x.st.s==="due"||x.st.s==="overdue").sort((a,b)=>(b.st.days??1e9)/(b.r.every||7)-(a.st.days??1e9)/(a.r.every||7));
@@ -438,6 +489,7 @@ function viewToday(){
   const notes=S.notes.filter(n=>!n.done);
   return `<section class="view">
     ${statsHTML()}
+    ${nobetCard()}
     <div class="card">
       <div class="row spread"><h3>Tonight's reading</h3>${rd.istisare?'<span class="pill on">İstişare</span>':rd.done?'<span class="pill on">Done</span>':'<span class="pill warn">Not yet</span>'}</div>
       <label class="toggle" data-a="readDone"><span class="box ${rd.done?"on":""}"></span>Reading</label>
@@ -446,7 +498,8 @@ function viewToday(){
       <div><div class="sub" style="margin:0 0 8px">Who attended</div>${chips(null,rd.attendees||[],"readAtt")}</div>
     </div>
     <div class="card">
-      <div class="row spread"><h3>Cemaat today</h3><span class="sub" style="margin:0">Tap who prayed. Two or more counts as cemaat.</span></div>
+      <div class="row spread"><h3>Cemaat today</h3>${ptimesHTML()}</div>
+      <div class="sub" style="margin:-6px 0 0">Tap who prayed. Two or more counts as cemaat.</div>
       <div class="prayers">${AP().map(([id,name])=>{const a=(d.prayers||{})[id]||[];return `<div class="prayer"><span class="name">${name}</span>${chips(null,a,"pray",`data-p="${id}"`)}<span class="pill ${a.length>=2?"on":""}">${a.length>=2?"Cemaat":a.length===1?"Alone":"—"}</span></div>`;}).join("")}</div>
     </div>
     <div class="card">
